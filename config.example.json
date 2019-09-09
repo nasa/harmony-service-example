@@ -1,0 +1,14 @@
+{
+  "earthdata_login": {
+    "username": "your_urs_username",
+    "password": "your_urs_password",
+    "endpoint": "https://urs.earthdata.nasa.gov"
+
+  },
+  "s3": {
+    "staging_bucket": "your-bucket",
+    "staging_path": "/your/staging/path",
+    "use_localstack": false,
+    "region": "us-east-1"
+  }
+}
