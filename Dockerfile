@@ -7,4 +7,4 @@ WORKDIR "/home"
 # Bundle app source
 COPY . .
 
-ENTRYPOINT ["python3", "harmony_gdal.py"]
+ENTRYPOINT ["python3", "-m", "harmony_gdal.cli"]
