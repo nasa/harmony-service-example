@@ -32,7 +32,6 @@ from urllib import request
 from os import environ, path
 
 _s3 = None
-_is_networking_setup = False
 
 # Flag determining the use of LocalStack (for testing), which will influence how URLs are structured
 # and how S3 is accessed
@@ -78,8 +77,6 @@ def _setup_networking():
     -------
     None
     """
-    if _is_networking_setup:
-        return
     try:
         manager = request.HTTPPasswordMgrWithDefaultRealm()
         manager.add_password(
@@ -92,8 +89,6 @@ def _setup_networking():
         request.install_opener(opener)
     except KeyError:
         print('Warning: Earthdata Login must be set up for authenticated downloads.  Requests will be unauthenticated.')
-    _is_networking_setup = True
-
 
 def download(url, destination_dir):
     """
@@ -138,7 +133,9 @@ def download(url, destination_dir):
         print('Completed', url)
         return destination
 
-    destination = path.join(destination_dir, path.basename(url))
+    destination = path.join(destination_dir, path.basename(url).split('?')[0])
+
+    url = url.replace('//localhost', '//host.docker.internal')
 
     # Allow faster local testing by referencing files directly
     if not url.startswith('http') and not url.startswith('s3'):

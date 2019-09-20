@@ -8,6 +8,7 @@ import subprocess
 import os
 import urllib.request
 import urllib.parse
+import re
 import boto3
 
 from osgeo import gdal
@@ -54,6 +55,8 @@ def subset(layerid, operation, srcfile, dstdir):
 
 
 def reproject(layerid, operation, srcfile, dstdir):
+    if "crs" not in operation["format"]:
+        return srcfile
     dstfile = "%s/%s" % (dstdir, layerid + '__reprojected.tif')
     cmd('gdalwarp',
         "-t_srs",
@@ -130,6 +133,13 @@ def read_layer_format(collection, filename, layer_id):
     layer = layer_line.split("=")[-1]
     return layer.replace(filename, "{}")
 
+def get_variables(filename):
+    gdalinfo_lines = cmd("gdalinfo", filename)
+    result = []
+    for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)), gdalinfo_lines):
+        result.append({ "name": re.split(r":", subdataset)[-1] })
+    print(result)
+    return result
 
 def post_file(url, filename, mime):
     headers = {
@@ -233,8 +243,15 @@ def invoke(operation, output_name):
 
         layernames = []
 
+        result = None
         for source in operation['sources']:
             collection = source['collection']
+            if 'variables' not in source or len(source['variables']) == 0:
+                # Use all variables if none are specified
+                download(source['granules'][0]['url'], output_dir)
+                filename = download(source['granules'][0]['url'], output_dir)
+                source['variables'] = get_variables(filename)
+
             for variable in source['variables']:
                 layer_format = None
                 result = None
@@ -252,14 +269,14 @@ def invoke(operation, output_name):
                                       filename, output_dir)
                     result = add_to_result(
                         layer_id, operation, filename, output_dir)
-                    layernames.append("%s__%s" %
-                                      (granule['name'], variable['name']))
+                    layernames.append(layer_id)
 
                     # Currently limit to the first granule so it runs faster and doesn't annoy the DAACs
                     break
 
         ds = gdal.Open(result)
         for i in range(len(layernames)):
+            print(layernames[i])
             ds.GetRasterBand(i + 1).SetDescription(layernames[i])
         ds = None
 
