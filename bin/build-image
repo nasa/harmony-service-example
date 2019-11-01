@@ -5,4 +5,6 @@ set -e
 image="harmony/gdal"
 tag=${1:-latest}
 
+[ ! -d "deps/harmony" ] && git clone https://git.earthdata.nasa.gov/scm/harmony/harmony-service-lib-py.git deps/harmony
+
 docker build -t ${image}:${tag} .

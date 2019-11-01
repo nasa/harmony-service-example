@@ -4,6 +4,7 @@ tmp*
 tmp
 config-*.json
 config.json
+deps
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
