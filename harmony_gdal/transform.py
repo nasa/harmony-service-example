@@ -107,16 +107,15 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             self.completed_with_local_file(result)
 
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             self.completed_with_error('An unexpected error occurred')
-            raise
 
         finally:
             self.cleanup()
 
 
     def cmd(self, *args):
-        self.logger.info(args[0], *["'{}'".format(arg) for arg in args[1:]])
+        self.logger.info(args[0] + " " + " ".join(["'{}'".format(arg) for arg in args[1:]]))
         result_str = subprocess.check_output(args).decode("utf-8")
         return result_str.split("\n")
 

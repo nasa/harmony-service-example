@@ -7,6 +7,7 @@ Runs the harmony_gdal CLI
 """
 
 import argparse
+import logging
 import harmony
 
 from .transform import HarmonyAdapter
