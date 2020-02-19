@@ -31,6 +31,28 @@ mime_to_options = {
     "image/tiff": ["-co", "COMPRESS=LZW"]
 }
 
+class ObjectView(object):
+    """
+    Simple class to make a dict look like an object.
+
+    Example
+    --------
+        >>> o = ObjectView({ "key": "value" })
+        >>> o.key
+        'value'
+    """
+    def __init__(self, d):
+        """
+        Allows accessing the keys of dictionary d as though they
+        are properties on an object
+
+        Parameters
+        ----------
+        d : dict
+            a dictionary whose keys we want to access as object properties
+        """
+        self.__dict__ = d
+
 class HarmonyAdapter(BaseHarmonyAdapter):
     """
     See https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse
@@ -42,17 +64,20 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         Run the service on the message contained in `self.message`.  Fetches data, runs the service,
         puts the result in a file, calls back to Harmony, and cleans up after itself.
 
-        Note: This only operates on a single granule.  If multiple granules are requested, it
-            subsets the first.  The subsetter is capable of combining multiple granules but will not
-            do so until asynchronous requests are available and performance of data access has
+        Note: When a synchronous request is made, this only operates on a single granule.  If multiple
+            granules are requested, it subsets the first.  The subsetter is capable of combining
+            multiple granules but will not do so until adequate performance of data access has
             been established
+            For async requests, it subsets the granules individually and returns them as partial results
         """
         logger = self.logger
         message = self.message
 
         try:
             # Limit to the first granule.  See note in method documentation
-            granules = message.granules[:1]
+            granules = message.granules
+            if message.isSynchronous:
+                granules = granules[:1]
 
             output_dir = "tmp/data"
             self.cmd('rm', '-rf', output_dir)
@@ -63,7 +88,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             layernames = []
 
             result = None
-            for granule in granules:
+            for i, granule in enumerate(granules):
                 if not granule.variables:
                     granule.variables = self.get_variables(granule.local_filename)
 
@@ -97,14 +122,22 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                     )
                     layernames.append(layer_id)
 
-            ds = gdal.Open(result)
-            for i in range(len(layernames)):
-                ds.GetRasterBand(i + 1).SetDescription(layernames[i])
-            ds = None
 
-            result = self.reformat(result, output_dir)
+                if not message.isSynchronous:
+                    # Send a single file and reset
+                    self.update_layernames(result, [v.name for v in granule.variables])
+                    result = self.reformat(result, output_dir)
+                    progress = int(100 * (i + 1) / len(granules))
+                    self.async_add_local_file_partial_result(result, title=granule.id, progress=progress)
+                    layernames = []
+                    result = None
 
-            self.completed_with_local_file(result)
+            if message.isSynchronous:
+                self.update_layernames(result, layernames)
+                result = self.reformat(result, output_dir)
+                self.completed_with_local_file(result)
+            else:
+                self.async_completed_successfully()
 
         except Exception as e:
             logger.exception(e)
@@ -113,6 +146,21 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         finally:
             self.cleanup()
 
+    def update_layernames(self, filename, layernames):
+        """
+        Updates the layers in the given file to match the list of layernames provided
+
+        Parameters
+        ----------
+        filename : string
+            The path to file whose layernames should be updated
+        layernames : string[]
+            An array of names, in order, to apply to the layers
+        """
+        ds = gdal.Open(filename)
+        for i in range(len(layernames)):
+            ds.GetRasterBand(i + 1).SetDescription(layernames[i])
+        ds = None
 
     def cmd(self, *args):
         self.logger.info(args[0] + " " + " ".join(["'{}'".format(arg) for arg in args[1:]]))
@@ -218,6 +266,5 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         gdalinfo_lines = self.cmd("gdalinfo", filename)
         result = []
         for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)), gdalinfo_lines):
-            result.append({ "name": re.split(r":", subdataset)[-1] })
-        print(result)
+            result.append(ObjectView({ "name": re.split(r":", subdataset)[-1] }))
         return result
