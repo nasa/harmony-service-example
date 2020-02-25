@@ -89,21 +89,36 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
             result = None
             for i, granule in enumerate(granules):
+                variables = self.get_variables(granule.local_filename)
+                is_geotiff = self.is_geotiff(granule.local_filename)
                 if not granule.variables:
-                    granule.variables = self.get_variables(granule.local_filename)
+                    granule.variables = variables
 
                 for variable in granule.variables:
-                    layer_format = self.read_layer_format(
-                        granule.collection,
-                        granule.local_filename,
-                        variable.name
-                    )
+                    band = None
+                    if is_geotiff:
+                        # For geotiffs, we can't reference variables by name but need to reference
+                        # by raster band instead
+                        index = next(i for i, v in enumerate(variables) if v.name == variable.name)
+                        if index is None:
+                            return self.completed_with_error('band not found: ' + variable)
+                        band = index + 1
+                        filename = granule.local_filename
+                    else:
+                        # For non-geotiffs, we reference variables by appending a file path
+                        layer_format = self.read_layer_format(
+                            granule.collection,
+                            granule.local_filename,
+                            variable.name
+                        )
+                        filename = layer_format.format(granule.local_filename)
+
                     layer_id = granule.id + '__' + variable.name
-                    filename = layer_format.format(granule.local_filename)
                     filename = self.subset(
                         layer_id,
                         filename,
-                        output_dir
+                        output_dir,
+                        band
                     )
                     filename = self.reproject(
                         layer_id,
@@ -167,12 +182,14 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         result_str = subprocess.check_output(args).decode("utf-8")
         return result_str.split("\n")
 
-    def subset(self, layerid, srcfile, dstdir):
+    def subset(self, layerid, srcfile, dstdir, band=None):
         subset = self.message.subset
         if not subset:
             return srcfile
 
         command = ['gdal_translate', '-of', 'GTiff']
+        if band is not None:
+            command.extend(['-b', '%s' % (band)])
         if subset.bbox:
             bbox = [str(c) for c in subset.bbox]
             command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
@@ -265,6 +282,17 @@ class HarmonyAdapter(BaseHarmonyAdapter):
     def get_variables(self, filename):
         gdalinfo_lines = self.cmd("gdalinfo", filename)
         result = []
+        # Normal case of NetCDF / HDF, where variables are subdatasets
         for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)), gdalinfo_lines):
             result.append(ObjectView({ "name": re.split(r":", subdataset)[-1] }))
+        if len(result) > 0:
+            return result
+
+        # GeoTIFFs, where variables are bands, with descriptions set to their variable name
+        for subdataset in filter((lambda line: re.match(r"^\s*Description = ", line)), gdalinfo_lines):
+            result.append(ObjectView({ "name": re.split(r" = ", subdataset)[-1] }))
         return result
+
+    def is_geotiff(self, filename):
+        gdalinfo_lines = self.cmd("gdalinfo", filename)
+        return gdalinfo_lines[0] == "Driver: GTiff/GeoTIFF"
