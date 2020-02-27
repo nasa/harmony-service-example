@@ -86,7 +86,6 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
             result = None
             for i, granule in enumerate(granules):
-                self.prepare_output_dir(output_dir)
                 self.download_granules([granule])
 
                 variables = self.get_variables(granule.local_filename)
@@ -207,6 +206,23 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             command.extend(['-b', '%s' % (band)])
         if subset.bbox:
             bbox = [str(c) for c in subset.bbox]
+            if int(bbox[2]) < int(bbox[0]):
+                # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
+                # the result
+                west_dstfile = "%s/%s" % (dstdir, layerid + '__west_subsetted.tif')
+                east_dstfile = "%s/%s" % (dstdir, layerid + '__east_subsetted.tif')
+                dstfile = "%s/%s" % (dstdir, layerid + '__subsetted.tif')
+                west = command + ["-projwin", '-180', bbox[3], bbox[2], bbox[1], srcfile, west_dstfile]
+                east = command + ["-projwin", bbox[0], bbox[3], '180', bbox[1], srcfile, east_dstfile]
+                self.cmd(*west)
+                self.cmd(*east)
+                self.cmd('gdal_merge.py',
+                    '-o', dstfile,
+                    '-of', "GTiff",
+                    east_dstfile,
+                    west_dstfile)
+                return dstfile
+
             command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
 
         dstfile = "%s/%s" % (dstdir, layerid + '__subsetted.tif')
