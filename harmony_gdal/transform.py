@@ -80,15 +80,15 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                 granules = granules[:1]
 
             output_dir = "tmp/data"
-            self.cmd('rm', '-rf', output_dir)
-            self.cmd('mkdir', '-p', output_dir)
-
-            self.download_granules(granules)
+            self.prepare_output_dir(output_dir)
 
             layernames = []
 
             result = None
             for i, granule in enumerate(granules):
+                self.prepare_output_dir(output_dir)
+                self.download_granules([granule])
+
                 variables = self.get_variables(granule.local_filename)
                 is_geotiff = self.is_geotiff(granule.local_filename)
                 if not granule.variables:
@@ -144,6 +144,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                     result = self.reformat(result, output_dir)
                     progress = int(100 * (i + 1) / len(granules))
                     self.async_add_local_file_partial_result(result, title=granule.id, progress=progress)
+                    self.cleanup()
+                    self.prepare_output_dir(output_dir)
                     layernames = []
                     result = None
 
@@ -176,6 +178,19 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         for i in range(len(layernames)):
             ds.GetRasterBand(i + 1).SetDescription(layernames[i])
         ds = None
+
+    def prepare_output_dir(self, output_dir):
+        """
+        Deletes (if present) and recreates the given output_dir, ensuring it exists
+        and is empty
+
+        Parameters
+        ----------
+        output_dir : string
+            the directory to delete and recreate
+        """
+        self.cmd('rm', '-rf', output_dir)
+        self.cmd('mkdir', '-p', output_dir)
 
     def cmd(self, *args):
         self.logger.info(args[0] + " " + " ".join(["'{}'".format(arg) for arg in args[1:]]))
