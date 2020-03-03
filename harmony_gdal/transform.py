@@ -206,7 +206,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             command.extend(['-b', '%s' % (band)])
         if subset.bbox:
             bbox = [str(c) for c in subset.bbox]
-            if int(bbox[2]) < int(bbox[0]):
+            if float(bbox[2]) < float(bbox[0]):
                 # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
                 # the result
                 west_dstfile = "%s/%s" % (dstdir, layerid + '__west_subsetted.tif')
