@@ -6,8 +6,8 @@ WORKDIR "/home"
 
 # Bundle app source
 COPY . .
-
-ENV PYTHONPATH "${PYTHONPATH}:/home/deps/harmony"
+RUN pip3 install deps/harmony-service-lib-py
+RUN pip3 install -r requirements.txt
 
 # To run locally during dev, build the image and run, e.g.:
 # docker run --rm -it -e ENV=dev -v $(pwd):/home harmony/gdal --harmony-action invoke --harmony-input "$(cat ../harmony/example/service-operation.json)"
