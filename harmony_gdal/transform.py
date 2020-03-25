@@ -84,6 +84,12 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
             layernames = []
 
+            operations = dict(
+                is_variable_subset = True,
+                is_regridded = bool(message.format.crs),
+                is_subsetted = bool(message.subset and message.subset.bbox)
+            )
+
             result = None
             for i, granule in enumerate(granules):
                 self.download_granules([granule])
@@ -142,7 +148,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                     self.update_layernames(result, [v.name for v in granule.variables])
                     result = self.reformat(result, output_dir)
                     progress = int(100 * (i + 1) / len(granules))
-                    self.async_add_local_file_partial_result(result, title=granule.id, progress=progress)
+                    self.async_add_local_file_partial_result(result, source_granule=granule, title=granule.id, progress=progress, **operations)
                     self.cleanup()
                     self.prepare_output_dir(output_dir)
                     layernames = []
@@ -151,7 +157,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             if message.isSynchronous:
                 self.update_layernames(result, layernames)
                 result = self.reformat(result, output_dir)
-                self.completed_with_local_file(result)
+                self.completed_with_local_file(result, source_granule=granules[-1], **operations)
             else:
                 self.async_completed_successfully()
 
