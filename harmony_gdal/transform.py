@@ -73,6 +73,9 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         logger = self.logger
         message = self.message
 
+        if message.subset and message.subset.shape:
+            logger.warn('Ignoring subset request for user shapefile %s' % (message.subset.shape.href,))
+
         try:
             # Limit to the first granule.  See note in method documentation
             granules = message.granules
