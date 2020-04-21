@@ -206,6 +206,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         return result_str.split("\n")
 
     def subset(self, layerid, srcfile, dstdir, band=None):
+        normalized_layerid = layerid.replace('/', '_')
         subset = self.message.subset
         if not subset:
             return srcfile
@@ -218,9 +219,9 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             if float(bbox[2]) < float(bbox[0]):
                 # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
                 # the result
-                west_dstfile = "%s/%s" % (dstdir, layerid + '__west_subsetted.tif')
-                east_dstfile = "%s/%s" % (dstdir, layerid + '__east_subsetted.tif')
-                dstfile = "%s/%s" % (dstdir, layerid + '__subsetted.tif')
+                west_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__west_subsetted.tif')
+                east_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__east_subsetted.tif')
+                dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
                 west = command + ["-projwin", '-180', bbox[3], bbox[2], bbox[1], srcfile, west_dstfile]
                 east = command + ["-projwin", bbox[0], bbox[3], '180', bbox[1], srcfile, east_dstfile]
                 self.cmd(*west)
@@ -234,7 +235,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
             command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
 
-        dstfile = "%s/%s" % (dstdir, layerid + '__subsetted.tif')
+        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
         command.extend([srcfile, dstfile])
         self.cmd(*command)
         return dstfile
@@ -243,7 +244,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         crs = self.message.format.crs
         if not crs:
             return srcfile
-        dstfile = "%s/%s" % (dstdir, layerid + '__reprojected.tif')
+        normalized_layerid = layerid.replace('/', '_')
+        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__reprojected.tif')
         self.cmd('gdalwarp',
             "-t_srs",
             crs,
@@ -257,7 +259,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
         fmt = self.message.format
 
-        dstfile = "%s/%s__resized.tif" % (dstdir, layerid)
+        normalized_layerid = layerid.replace('/', '_')
+        dstfile = "%s/%s__resized.tif" % (dstdir, normalized_layerid)
 
         if fmt.width or fmt.height:
             width = fmt.width or 0
