@@ -11,7 +11,7 @@
         {
           "id": "V1233801695-EEDTEST",
           "name": "red_var",
-          "longName":"Red variable"
+          "fullPath":"red_var"
         }
       ],
       "granules": [
