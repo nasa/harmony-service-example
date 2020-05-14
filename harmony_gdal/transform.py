@@ -17,8 +17,8 @@ from osgeo import gdal
 
 mime_to_gdal = {
     "image/tiff": "GTiff",
-    "image/png": "GIF",
-    "image/gif": "PNG"
+    "image/png": "PNG",
+    "image/gif": "GIF"
 }
 
 mime_to_extension = {

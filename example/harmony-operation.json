@@ -1,5 +1,6 @@
 {
-  "version": "0.6.0",
+  "$schema": "../../harmony/app/schemas/data-operation/0.8.0/data-operation-v0.8.0.json",
+  "version": "0.8.0",
   "callback": "http://localhost/some-path",
   "stagingLocation": "s3://example-bucket/public/some-org/some-service/some-uuid/",
   "user": "jdoe",
@@ -9,7 +10,8 @@
       "variables": [
         {
           "id": "V1233801695-EEDTEST",
-          "name": "red_var"
+          "name": "red_var",
+          "fullPath":"red_var"
         }
       ],
       "granules": [
