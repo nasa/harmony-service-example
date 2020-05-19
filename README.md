@@ -3,7 +3,7 @@
 A demonstration of a subsetter capability to be used with Harmomy.
 
 ## Installing dependencies - make sure to clone harmony-service-lib-py locally
-pip3 install ../harmony-service-lib-py/ --target deps/harmony
+pip3 install ../harmony-service-lib-py/ --target deps/harmony-service-lib-py
 
 ## Build image
 bin/build-image
