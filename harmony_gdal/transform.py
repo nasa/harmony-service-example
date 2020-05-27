@@ -11,6 +11,7 @@ import urllib.parse
 import re
 import boto3
 
+from geo import clip_bbox
 from harmony import BaseHarmonyAdapter
 
 from osgeo import gdal
@@ -228,21 +229,31 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         if not subset:
             return srcfile
 
+
         command = ['gdal_translate', '-of', 'GTiff']
         if subset.bbox:
             dataset_bounds = self._dataset_bounds(srcfile)
-            bbox = self._clip_bbox(dataset_bounds, subset.bbox)
-            bbox = [str(c) for c in subset.bbox]
-            if float(bbox[2]) < float(bbox[0]):
+            bbox = clip_bbox(dataset_bounds, subset.bbox)
+
+            if bbox[2] < bbox[0]:
                 # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
                 # the result
                 west_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__west_subsetted.tif')
                 east_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__east_subsetted.tif')
                 dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
-                west = command + ["-projwin", '-180', bbox[3], bbox[2], bbox[1], srcfile, west_dstfile]
-                east = command + ["-projwin", bbox[0], bbox[3], '180', bbox[1], srcfile, east_dstfile]
+
+                west_bbox = clip_bbox(dataset_bounds, [-180, bbox[1], bbox[2], bbox[3]])
+                west_bbox = [str(c) for c in west_bbox]
+                west = command + ["-projwin", west_bbox[0], west_bbox[3], west_bbox[2], west_bbox[1], 
+                        srcfile, west_dstfile]
                 self.cmd(*west)
+
+                east_bbox = clip_bbox(dataset_bounds, [bbox[0], bbox[1], 180, bbox[3]])
+                east_bbox = [str(c) for c in east_bbox]
+                east = command + ["-projwin", east_bbox[0], east_bbox[3], east_bbox[2], east_bbox[1], 
+                        srcfile, east_dstfile]
                 self.cmd(*east)
+
                 self.cmd('gdal_merge.py',
                     '-o', dstfile,
                     '-of', "GTiff",
@@ -250,6 +261,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                     west_dstfile)
                 return dstfile
 
+            bbox = [str(c) for c in bbox]
             command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
 
         dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
@@ -263,17 +275,17 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         y = ds.RasterYSize
         gt = ds.GetGeoTransform()
 
-        return ([gt[0], gt[0] + x*gt[1] + y*gt[2]], [gt[3], gt[3] + x*gt[4] + y*gt[5]])
+        x_range = [gt[0], gt[0] + x*gt[1] + y*gt[2]]
+        y_range = [gt[3], gt[3] + x*gt[4] + y*gt[5]]
 
-    def _clip_bbox(self, dataset_bounds, bbox):
-        """Clips the bbox so it is no larger than the dataset.
-        """
-        minx, maxx = dataset_bounds[0]
-        miny, maxy = dataset_bounds[1]
-        bbox_minx, bbox_maxy, bbox_maxx, bbox_miny = bbox
-
-        # [ulx, uly, lrx, lry]
-        return [max(minx, bbox_minx), min(maxy, bbox_maxy), min(maxx, bbox_maxx), max(miny, bbox_miny)]
+        # Apparently the geo transform's pixel size can be negative, so
+        # sometimes we have to reverse the range. Why?
+        if gt[2] < 0:
+            x_range.reverse()
+        if gt[5] < 0:
+            y_range.reverse()
+        
+        return (x_range, y_range)
 
     def reproject(self, layerid, srcfile, dstdir):
         crs = self.message.format.crs
