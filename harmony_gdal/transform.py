@@ -122,11 +122,16 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                         filename = layer_format.format(granule.local_filename)
 
                     layer_id = granule.id + '__' + variable.name
-                    filename = self.subset(
+                    filename = self.as_geotiff(
                         layer_id,
                         filename,
                         output_dir,
                         band
+                    )
+                    filename = self.subset(
+                        layer_id,
+                        filename,
+                        output_dir
                     )
                     filename = self.reproject(
                         layer_id,
@@ -205,16 +210,28 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         result_str = subprocess.check_output(args).decode("utf-8")
         return result_str.split("\n")
 
-    def subset(self, layerid, srcfile, dstdir, band=None):
+    def as_geotiff(self, layerid, srcfile, dstdir, band=None):
+        normalized_layerid = layerid.replace('/', '_')
+        command = ['gdal_translate', '-of', 'GTiff']
+        if band is not None:
+            command.extend(['-b', '%s' % (band)])
+        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__converted.tif')
+        command.extend([srcfile, dstfile])
+
+        self.cmd(*command)
+
+        return dstfile
+
+    def subset(self, layerid, srcfile, dstdir):
         normalized_layerid = layerid.replace('/', '_')
         subset = self.message.subset
         if not subset:
             return srcfile
 
         command = ['gdal_translate', '-of', 'GTiff']
-        if band is not None:
-            command.extend(['-b', '%s' % (band)])
         if subset.bbox:
+            dataset_bounds = self._dataset_bounds(srcfile)
+            bbox = self._clip_bbox(dataset_bounds, subset.bbox)
             bbox = [str(c) for c in subset.bbox]
             if float(bbox[2]) < float(bbox[0]):
                 # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
@@ -239,6 +256,24 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         command.extend([srcfile, dstfile])
         self.cmd(*command)
         return dstfile
+
+    def _dataset_bounds(self, srcfile):
+        ds = gdal.Open(srcfile)
+        x = ds.RasterXSize
+        y = ds.RasterYSize
+        gt = ds.GetGeoTransform()
+
+        return ([gt[0], gt[0] + x*gt[1] + y*gt[2]], [gt[3], gt[3] + x*gt[4] + y*gt[5]])
+
+    def _clip_bbox(self, dataset_bounds, bbox):
+        """Clips the bbox so it is no larger than the dataset.
+        """
+        minx, maxx = dataset_bounds[0]
+        miny, maxy = dataset_bounds[1]
+        bbox_minx, bbox_maxy, bbox_maxx, bbox_miny = bbox
+
+        # [ulx, uly, lrx, lry]
+        return [max(minx, bbox_minx), min(maxy, bbox_maxy), min(maxx, bbox_maxx), max(miny, bbox_miny)]
 
     def reproject(self, layerid, srcfile, dstdir):
         crs = self.message.format.crs

@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+dependencies:
+  - awscli~=1.17
+  - black~=19.10b0
+  - boto3~=1.11
+  - flake8~=3.7
+  - gdal
+  - ipython~=7.9
+  - jedi~=0.17.0
+  - pylint~=2.5
+  - pytest~=5.3
+  - pip:
+    - pip~=20.1
+    - pytest-watch~=4.2
