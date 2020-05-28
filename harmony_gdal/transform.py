@@ -129,7 +129,6 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                         output_dir,
                         band
                     )
-                    self.logger.info(f"********* {filename}")
                     filename = self.subset(
                         layer_id,
                         filename,
