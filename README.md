@@ -11,7 +11,7 @@ pip3 install ../harmony-service-lib-py/ --target deps/harmony-service-lib-py
 
 ### Using `conda`, create a conda environment from the development dependencies:
 ```
-conda env create -f environment.yml
+conda env create -n hgdal -f environment.yml
 ```
 
 ### Run unit tests once or in watch-mode:
