@@ -11,7 +11,7 @@ import urllib.parse
 import re
 import boto3
 
-from geo import clip_bbox
+from harmony_gdal.geo import clip_bbox
 from harmony import BaseHarmonyAdapter
 
 from osgeo import gdal
@@ -129,6 +129,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                         output_dir,
                         band
                     )
+                    self.logger.info(f"********* {filename}")
                     filename = self.subset(
                         layer_id,
                         filename,
@@ -226,48 +227,33 @@ class HarmonyAdapter(BaseHarmonyAdapter):
     def subset(self, layerid, srcfile, dstdir):
         normalized_layerid = layerid.replace('/', '_')
         subset = self.message.subset
-        if not subset:
+        if not subset or not subset.bbox:
             return srcfile
 
-
         command = ['gdal_translate', '-of', 'GTiff']
-        if subset.bbox:
-            dataset_bounds = self._dataset_bounds(srcfile)
-            bbox = clip_bbox(dataset_bounds, subset.bbox)
+        dataset_bounds = self._dataset_bounds(srcfile)
+        bboxes = clip_bbox(dataset_bounds, subset.bbox)
 
-            if bbox[2] < bbox[0]:
-                # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
-                # the result
-                west_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__west_subsetted.tif')
-                east_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__east_subsetted.tif')
-                dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
+        # We should always have some intersection
+        assert len(bboxes) > 0
 
-                west_bbox = clip_bbox(dataset_bounds, [-180, bbox[1], bbox[2], bbox[3]])
-                west_bbox = [str(c) for c in west_bbox]
-                west = command + ["-projwin", west_bbox[0], west_bbox[3], west_bbox[2], west_bbox[1], 
-                        srcfile, west_dstfile]
-                self.cmd(*west)
-
-                east_bbox = clip_bbox(dataset_bounds, [bbox[0], bbox[1], 180, bbox[3]])
-                east_bbox = [str(c) for c in east_bbox]
-                east = command + ["-projwin", east_bbox[0], east_bbox[3], east_bbox[2], east_bbox[1], 
-                        srcfile, east_dstfile]
-                self.cmd(*east)
-
-                self.cmd('gdal_merge.py',
-                    '-o', dstfile,
-                    '-of', "GTiff",
-                    east_dstfile,
-                    west_dstfile)
-                return dstfile
-
+        dstfiles = []
+        for i, bbox in enumerate(bboxes):
+            dstfile = "%s/%s" % (dstdir, normalized_layerid + f"__{i}_subsetted.tif")
+            dstfiles.append(dstfile)
             bbox = [str(c) for c in bbox]
-            command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
+            command = command + ["-projwin", bbox[0], bbox[3], bbox[2], bbox[1], srcfile, dstfile]
+            self.cmd(*command)
 
-        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
-        command.extend([srcfile, dstfile])
-        self.cmd(*command)
-        return dstfile
+        if len(dstfiles) == 1:
+            return dstfiles[0]
+        else:
+            dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
+            self.cmd('gdal_merge.py',
+                '-o', dstfile,
+                '-of', "GTiff",
+                *dstfiles)
+            return dstfile
 
     def _dataset_bounds(self, srcfile):
         ds = gdal.Open(srcfile)
