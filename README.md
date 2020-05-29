@@ -4,6 +4,12 @@ A demonstration of a subsetter capability to be used with Harmomy.
 
 ## Prerequisites
 
+For building & pushing the image locally:
+
+1. [Docker](https://www.docker.com/get-started)
+
+For local development:
+
 1. [pyenv](https://github.com/pyenv/pyenv)
 2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
 
