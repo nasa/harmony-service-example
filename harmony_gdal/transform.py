@@ -11,6 +11,7 @@ import urllib.parse
 import re
 import boto3
 
+from harmony_gdal.geo import clip_bbox
 from harmony import BaseHarmonyAdapter
 
 from osgeo import gdal
@@ -122,11 +123,16 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                         filename = layer_format.format(granule.local_filename)
 
                     layer_id = granule.id + '__' + variable.name
-                    filename = self.subset(
+                    filename = self.as_geotiff(
                         layer_id,
                         filename,
                         output_dir,
                         band
+                    )
+                    filename = self.subset(
+                        layer_id,
+                        filename,
+                        output_dir
                     )
                     filename = self.reproject(
                         layer_id,
@@ -205,40 +211,66 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         result_str = subprocess.check_output(args).decode("utf-8")
         return result_str.split("\n")
 
-    def subset(self, layerid, srcfile, dstdir, band=None):
+    def as_geotiff(self, layerid, srcfile, dstdir, band=None):
         normalized_layerid = layerid.replace('/', '_')
-        subset = self.message.subset
-        if not subset:
-            return srcfile
-
         command = ['gdal_translate', '-of', 'GTiff']
         if band is not None:
             command.extend(['-b', '%s' % (band)])
-        if subset.bbox:
-            bbox = [str(c) for c in subset.bbox]
-            if float(bbox[2]) < float(bbox[0]):
-                # If the bounding box crosses the antimeridian, subset into the east half and west half and merge
-                # the result
-                west_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__west_subsetted.tif')
-                east_dstfile = "%s/%s" % (dstdir, normalized_layerid + '__east_subsetted.tif')
-                dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
-                west = command + ["-projwin", '-180', bbox[3], bbox[2], bbox[1], srcfile, west_dstfile]
-                east = command + ["-projwin", bbox[0], bbox[3], '180', bbox[1], srcfile, east_dstfile]
-                self.cmd(*west)
-                self.cmd(*east)
-                self.cmd('gdal_merge.py',
-                    '-o', dstfile,
-                    '-of', "GTiff",
-                    east_dstfile,
-                    west_dstfile)
-                return dstfile
-
-            command.extend(["-projwin", bbox[0], bbox[3], bbox[2], bbox[1]])
-
-        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
+        dstfile = "%s/%s" % (dstdir, normalized_layerid + '__converted.tif')
         command.extend([srcfile, dstfile])
+
         self.cmd(*command)
+
         return dstfile
+
+    def subset(self, layerid, srcfile, dstdir):
+        normalized_layerid = layerid.replace('/', '_')
+        subset = self.message.subset
+        if not subset or not subset.bbox:
+            return srcfile
+
+        command = ['gdal_translate', '-of', 'GTiff']
+        dataset_bounds = self._dataset_bounds(srcfile)
+        bboxes = clip_bbox(dataset_bounds, subset.bbox)
+
+        # We should always have some intersection
+        assert len(bboxes) > 0
+
+        dstfiles = []
+        for i, bbox in enumerate(bboxes):
+            dstfile = "%s/%s" % (dstdir, normalized_layerid + f"__{i}_subsetted.tif")
+            dstfiles.append(dstfile)
+            bbox = [str(c) for c in bbox]
+            command = command + ["-projwin", bbox[0], bbox[3], bbox[2], bbox[1], srcfile, dstfile]
+            self.cmd(*command)
+
+        if len(dstfiles) == 1:
+            return dstfiles[0]
+        else:
+            dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
+            self.cmd('gdal_merge.py',
+                '-o', dstfile,
+                '-of', "GTiff",
+                *dstfiles)
+            return dstfile
+
+    def _dataset_bounds(self, srcfile):
+        ds = gdal.Open(srcfile)
+        x = ds.RasterXSize
+        y = ds.RasterYSize
+        gt = ds.GetGeoTransform()
+
+        x_range = [gt[0], gt[0] + x*gt[1] + y*gt[2]]
+        y_range = [gt[3], gt[3] + x*gt[4] + y*gt[5]]
+
+        # Apparently the geo transform's pixel size can be negative, so
+        # sometimes we have to reverse the range. Why?
+        if gt[2] < 0:
+            x_range.reverse()
+        if gt[5] < 0:
+            y_range.reverse()
+        
+        return (x_range, y_range)
 
     def reproject(self, layerid, srcfile, dstdir):
         crs = self.message.format.crs
