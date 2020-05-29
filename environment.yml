@@ -5,7 +5,7 @@ dependencies:
   - black~=19.10b0
   - boto3~=1.11
   - flake8~=3.7
-  - gdal
+  - gdal~=3.1
   - ipython~=7.9
   - jedi~=0.17.0
   - pylint~=2.5
