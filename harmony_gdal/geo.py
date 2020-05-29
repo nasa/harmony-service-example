@@ -32,8 +32,10 @@ def latlon_intersection(x, y):
 def _range_intersection(a, b):
     """Returns whether two numeric ranges intersect.
     """
-    if (b[0] <= (a[0] or a[1]) <= b[1]) or \
-            (a[0] <= (b[0] or b[1]) <= a[1]):
+    if (b[0] <= a[0] <= b[1]) or \
+       (b[0] <= a[1] <= b[1]) or \
+       (a[0] <= b[0] <= a[1]) or \
+       (a[0] <= b[1] <= a[1]): 
         return [max(a[0], b[0]), min(a[1], b[1])]
     else:
         return []

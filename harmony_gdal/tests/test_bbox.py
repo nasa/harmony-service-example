@@ -1,6 +1,7 @@
 import pytest
 
-from harmony_gdal.geo import clip_bbox, latlon_intersection
+from harmony_gdal.geo import clip_bbox, latlon_intersection, _range_intersection
+
 
 def test_clip_identical():
     dataset_bounds = ([10.0, 20.0], [40.0, 45.0])
@@ -76,3 +77,11 @@ def test_clip_antemeridian_dataset_west(bbox, expected):
 ])
 def test_latlon_intersection(a, b, expected):
     assert latlon_intersection(a, b) == latlon_intersection(b, a) == expected
+
+@pytest.mark.parametrize("a,b,expected", [
+    ([0, 1], [2, 3], []),
+    ([-10, 10], [2, 3], [2, 3]),
+    ([-10, 5], [-5, 10], [-5, 5])
+])
+def test_range_intersection(a, b, expected):
+    assert _range_intersection(a, b) == _range_intersection(b, a) == expected
