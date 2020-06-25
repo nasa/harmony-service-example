@@ -27,7 +27,7 @@ For local development:
         $ conda env create -n hgdal -f environment.yml
         $ pyenv activate miniconda3-4.7.12/envs/hgdal
 
-3. Clone `harmony-service-lib-py` locally & install it as a dependency:
+3. (Optional) To use an unreleased version of the `harmony-service-lib-py`, e.g., when testing changes to it, install it as a dependency from the filesystem:
 
         $ git clone https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse ../harmony-service-lib-py
         $ pip3 install ../harmony-service-lib-py/ --target deps/harmony-service-lib-py
