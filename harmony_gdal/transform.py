@@ -169,11 +169,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
                 self.completed_with_local_file(result, source_granule=granules[-1], **operations)
             else:
                 self.async_completed_successfully()
-
-        except Exception as e:
-            logger.exception(e)
-            self.completed_with_error('An unexpected error occurred')
-
+        # Let the harmony service library handle the exception, but cleanup the files
         finally:
             self.cleanup()
 
@@ -269,7 +265,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             x_range.reverse()
         if gt[5] < 0:
             y_range.reverse()
-        
+
         return (x_range, y_range)
 
     def reproject(self, layerid, srcfile, dstdir):
