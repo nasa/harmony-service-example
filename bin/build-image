@@ -2,6 +2,9 @@
 
 set -e
 
+# source the .env file if it exists
+[[ -f .env ]] && source .env
+
 image="harmony/gdal"
 tag=${1:-latest}
 
@@ -16,10 +19,9 @@ for dep in harmony-service-lib-py; do
   fi
 done
 
-# Check whether we need a child or sibling (DIND) container. This is a hack;
-#   alternative implementations welcome.
-if cat /proc/1/cgroup | grep cpuset | grep -q docker; then
-  docker -H host.docker.internal:2375 build -t ${image}:${tag} .
+# If we're running Docker in Docker (DIND) then the docker daemon is on the host
+if [ -n "$DIND" ]; then
+  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${tag} .
 else
   docker build -t ${image}:${tag} .
 fi
