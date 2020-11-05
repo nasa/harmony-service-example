@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
+
+# source the .env file if it exists
+[[ -f .env ]] && source .env
 
 image="harmony/gdal"
 tag=${1:-latest}
@@ -16,4 +19,9 @@ for dep in harmony-service-lib-py; do
   fi
 done
 
-docker build -t ${image}:${tag} .
+# If we're running Docker in Docker (DIND) then the docker daemon is on the host
+if [ -n "$DIND" ]; then
+  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${tag} .
+else
+  docker build -t ${image}:${tag} .
+fi

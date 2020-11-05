@@ -50,6 +50,20 @@ For local development:
 
         $ bin/push-image
 
+### Building from Dev Container
+
+If you plan to build the Docker image from a container, in addition to the above instructions, you'll want to create a .env file and populate it with the following:
+
+```
+# Harmony-GDAL Environment Variables
+
+# Set to 'true' if running Docker in Docker and the docker daemon is somewhere other than the current context
+DIND=true
+
+# Indicates where docker commands should find the docker daemon
+DOCKER_DAEMON_ADDR=host.docker.internal:2375
+```
+
 ## CI
 
 The project has a [Bamboo CI job](https://ci.earthdata.nasa.gov/browse/HARMONY-HG) running
