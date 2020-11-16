@@ -3,16 +3,16 @@
 # If you have harmony in a peer folder with this repo, then you can run the following for an example
 #    python3 -m harmony_gdal --harmony-action invoke --harmony-input "$(cat ../harmony/example/service-operation.json)"
 
-import sys
 import subprocess
 import os
-import urllib.request
-import urllib.parse
 import re
-import boto3
+import shutil
+from tempfile import mkdtemp
 
 from harmony_gdal.geo import clip_bbox
 from harmony import BaseHarmonyAdapter
+from harmony.util import generate_output_filename, download, HarmonyException, stage
+from pystac import Asset
 
 from osgeo import gdal
 
@@ -31,6 +31,7 @@ mime_to_extension = {
 mime_to_options = {
     "image/tiff": ["-co", "COMPRESS=LZW"]
 }
+
 
 class ObjectView(object):
     """
@@ -54,124 +55,120 @@ class ObjectView(object):
         """
         self.__dict__ = d
 
+
 class HarmonyAdapter(BaseHarmonyAdapter):
     """
     See https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse
     for documentation and examples.
     """
 
-    def invoke(self):
+    def process_item(self, item, source):
         """
-        Run the service on the message contained in `self.message`.  Fetches data, runs the service,
-        puts the result in a file, calls back to Harmony, and cleans up after itself.
+        Converts an input STAC Item's data into Zarr, returning an output STAC item
 
-        Note: When a synchronous request is made, this only operates on a single granule.  If multiple
-            granules are requested, it subsets the first.  The subsetter is capable of combining
-            multiple granules but will not do so until adequate performance of data access has
-            been established
-            For async requests, it subsets the granules individually and returns them as partial results
+        Parameters
+        ----------
+        item : pystac.Item
+            the item that should be converted
+        source : harmony.message.Source
+            the input source defining the variables, if any, to subset from the item
+
+        Returns
+        -------
+        pystac.Item
+            a STAC item containing the Zarr output
         """
         logger = self.logger
         message = self.message
-
         if message.subset and message.subset.shape:
             logger.warn('Ignoring subset request for user shapefile %s' % (message.subset.shape.href,))
 
+        layernames = []
+
+        operations = dict(
+            variable_subset=source.variables,
+            is_regridded=bool(message.format.crs),
+            is_subsetted=bool(message.subset and message.subset.bbox)
+        )
+
+        result = item.clone()
+        result.assets = {}
+
+        # Create a temporary dir for processing we may do
+        output_dir = mkdtemp()
         try:
-            # Limit to the first granule.  See note in method documentation
-            granules = message.granules
-            if message.isSynchronous:
-                granules = granules[:1]
+            # Get the data file
+            asset = next(v for k, v in item.assets.items() if 'data' in (v.roles or []))
+            input_filename = download(asset.href, output_dir, logger=self.logger, access_token=self.message.accessToken)
 
-            output_dir = "tmp/data"
-            self.prepare_output_dir(output_dir)
+            basename = os.path.basename(generate_output_filename(asset.href, **operations))
 
-            layernames = []
+            variables = source.variables or self.get_variables(input_filename)
+            is_geotiff = self.is_geotiff(input_filename)
 
-            operations = dict(
-                is_variable_subset = True,
-                is_regridded = bool(message.format.crs),
-                is_subsetted = bool(message.subset and message.subset.bbox)
-            )
-
-            result = None
-            for i, granule in enumerate(granules):
-                self.download_granules([granule])
-
-                variables = self.get_variables(granule.local_filename)
-                is_geotiff = self.is_geotiff(granule.local_filename)
-                if not granule.variables:
-                    granule.variables = variables
-
-                for variable in granule.variables:
-                    band = None
-                    if is_geotiff:
-                        # For geotiffs, we can't reference variables by name but need to reference
-                        # by raster band instead
-                        index = next(i for i, v in enumerate(variables) if v.name == variable.name)
-                        if index is None:
-                            return self.completed_with_error('band not found: ' + variable)
-                        band = index + 1
-                        filename = granule.local_filename
-                    else:
-                        # For non-geotiffs, we reference variables by appending a file path
-                        layer_format = self.read_layer_format(
-                            granule.collection,
-                            granule.local_filename,
-                            variable.name
-                        )
-                        filename = layer_format.format(granule.local_filename)
-
-                    layer_id = granule.id + '__' + variable.name
-                    filename = self.as_geotiff(
-                        layer_id,
-                        filename,
-                        output_dir,
-                        band
+            for variable in variables:
+                band = None
+                if is_geotiff:
+                    # For geotiffs, we can't reference variables by name but need to reference
+                    # by raster band instead
+                    index = next(i for i, v in enumerate(variables) if v.name == variable.name)
+                    if index is None:
+                        raise HarmonyException('Band not found: ' + variable)
+                    band = index + 1
+                    filename = input_filename
+                else:
+                    # For non-geotiffs, we reference variables by appending a file path
+                    layer_format = self.read_layer_format(
+                        source.collection,
+                        input_filename,
+                        variable.name
                     )
-                    filename = self.subset(
-                        layer_id,
-                        filename,
-                        output_dir
-                    )
-                    filename = self.reproject(
-                        layer_id,
-                        filename,
-                        output_dir
-                    )
-                    filename = self.resize(
-                        layer_id,
-                        filename,
-                        output_dir
-                    )
-                    result = self.add_to_result(
-                        layer_id,
-                        filename,
-                        output_dir
-                    )
-                    layernames.append(layer_id)
+                    filename = layer_format.format(input_filename)
 
+                layer_id = basename + '__' + variable.name
+                filename = self.as_geotiff(
+                    layer_id,
+                    filename,
+                    output_dir,
+                    band
+                )
+                filename = self.subset(
+                    layer_id,
+                    filename,
+                    output_dir
+                )
+                filename = self.reproject(
+                    layer_id,
+                    filename,
+                    output_dir
+                )
+                filename = self.resize(
+                    layer_id,
+                    filename,
+                    output_dir
+                )
+                filename = self.add_to_result(
+                    layer_id,
+                    filename,
+                    output_dir
+                )
+                layernames.append(layer_id)
 
-                if not message.isSynchronous:
-                    # Send a single file and reset
-                    self.update_layernames(result, [v.name for v in granule.variables])
-                    result = self.reformat(result, output_dir)
-                    progress = int(100 * (i + 1) / len(granules))
-                    self.async_add_local_file_partial_result(result, source_granule=granule, title=granule.id, progress=progress, **operations)
-                    self.cleanup()
-                    self.prepare_output_dir(output_dir)
-                    layernames = []
-                    result = None
+            self.update_layernames(filename, [v.name for v in variables])
+            filename = self.reformat(filename, output_dir)
 
-            if message.isSynchronous:
-                self.update_layernames(result, layernames)
-                result = self.reformat(result, output_dir)
-                self.completed_with_local_file(result, source_granule=granules[-1], **operations)
-            else:
-                self.async_completed_successfully()
-        # Let the harmony service library handle the exception, but cleanup the files
+            output_filename = basename + os.path.splitext(filename)[-1]
+            mime = message.format.mime
+            url = stage(filename, output_filename, mime, location=message.stagingLocation, logger=logger)
+
+            # Update the STAC record
+            result.assets['data'] = Asset(url, title=output_filename, media_type=mime, roles=['data'])
+
+            # Return the STAC record
+            return result
         finally:
-            self.cleanup()
+            # Clean up any intermediate resources
+            shutil.rmtree(output_dir)
 
     def update_layernames(self, filename, layernames):
         """
@@ -227,7 +224,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
         command = ['gdal_translate', '-of', 'GTiff']
         dataset_bounds = self._dataset_bounds(srcfile)
-        bboxes = clip_bbox(dataset_bounds, subset.bbox)
+        bboxes = clip_bbox(dataset_bounds, subset.process('bbox'))
 
         # We should always have some intersection
         assert len(bboxes) > 0
@@ -245,9 +242,9 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         else:
             dstfile = "%s/%s" % (dstdir, normalized_layerid + '__subsetted.tif')
             self.cmd('gdal_merge.py',
-                '-o', dstfile,
-                '-of', "GTiff",
-                *dstfiles)
+                     '-o', dstfile,
+                     '-of', "GTiff",
+                     *dstfiles)
             return dstfile
 
     def _dataset_bounds(self, srcfile):
@@ -269,18 +266,17 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         return (x_range, y_range)
 
     def reproject(self, layerid, srcfile, dstdir):
-        crs = self.message.format.crs
+        crs = self.message.format.process('crs')
         if not crs:
             return srcfile
         normalized_layerid = layerid.replace('/', '_')
         dstfile = "%s/%s" % (dstdir, normalized_layerid + '__reprojected.tif')
         self.cmd('gdalwarp',
-            "-t_srs",
-            crs,
-            srcfile,
-            dstfile)
+                 "-t_srs",
+                 crs,
+                 srcfile,
+                 dstfile)
         return dstfile
-
 
     def resize(self, layerid, srcfile, dstdir):
         command = ['gdal_translate']
@@ -291,8 +287,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         dstfile = "%s/%s__resized.tif" % (dstdir, normalized_layerid)
 
         if fmt.width or fmt.height:
-            width = fmt.width or 0
-            height = fmt.height or 0
+            width = fmt.process('width') or 0
+            height = fmt.process('height') or 0
             command.extend(["-outsize", str(width), str(height)])
 
         command.extend([srcfile, dstfile])
@@ -300,15 +296,14 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         self.cmd(*command)
         return dstfile
 
-
     def add_to_result(self, layerid, srcfile, dstdir):
         tmpfile = "%s/tmp-result.tif" % (dstdir)
         dstfile = "%s/result.tif" % (dstdir)
 
         command = ['gdal_merge.py',
-                '-o', tmpfile,
-                '-of', "GTiff",
-                '-separate']
+                   '-o', tmpfile,
+                   '-of', "GTiff",
+                   '-separate']
         command.extend(mime_to_options["image/tiff"])
 
         if not os.path.exists(dstfile):
@@ -322,20 +317,20 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
         return dstfile
 
-
     def reformat(self, srcfile, dstdir):
         output_mime = self.message.format.mime
         if output_mime not in mime_to_gdal:
             raise Exception('Unrecognized output format: ' + output_mime)
+        self.message.format.process('mime')
         if output_mime == "image/tiff":
             return srcfile
 
         dstfile = "%s/translated.%s" % (dstdir, mime_to_extension[output_mime])
 
         command = ['gdal_translate',
-                '-of', mime_to_gdal[output_mime],
-                '-scale',
-                srcfile, dstfile]
+                   '-of', mime_to_gdal[output_mime],
+                   '-scale',
+                   srcfile, dstfile]
         self.cmd(*command)
 
         return dstfile
@@ -344,7 +339,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         gdalinfo_lines = self.cmd("gdalinfo", filename)
         layer_line = next(
             filter((lambda line: line.endswith(":" + layer_id)), gdalinfo_lines), None)
-        if layer_line == None:
+        if layer_line is None:
             print('Invalid Layer:', layer_id)
 
         layer = layer_line.split("=")[-1]
@@ -355,13 +350,13 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         result = []
         # Normal case of NetCDF / HDF, where variables are subdatasets
         for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)), gdalinfo_lines):
-            result.append(ObjectView({ "name": re.split(r":", subdataset)[-1] }))
+            result.append(ObjectView({"name": re.split(r":", subdataset)[-1]}))
         if len(result) > 0:
             return result
 
         # GeoTIFFs, where variables are bands, with descriptions set to their variable name
         for subdataset in filter((lambda line: re.match(r"^\s*Description = ", line)), gdalinfo_lines):
-            result.append(ObjectView({ "name": re.split(r" = ", subdataset)[-1] }))
+            result.append(ObjectView({"name": re.split(r" = ", subdataset)[-1]}))
         return result
 
     def is_geotiff(self, filename):
