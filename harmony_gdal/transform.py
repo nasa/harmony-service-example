@@ -87,7 +87,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
         operations = dict(
             variable_subset=source.variables,
-            is_regridded=bool(message.format.crs),
+            is_regridded=bool(message.format.srs),
             is_subsetted=bool(message.subset and message.subset.bbox)
         )
 
@@ -266,14 +266,14 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         return (x_range, y_range)
 
     def reproject(self, layerid, srcfile, dstdir):
-        crs = self.message.format.process('crs')
-        if not crs:
+        srs = self.message.format.process('srs')
+        if not (srs and srs.get('proj4', None)):
             return srcfile
         normalized_layerid = layerid.replace('/', '_')
         dstfile = "%s/%s" % (dstdir, normalized_layerid + '__reprojected.tif')
         self.cmd('gdalwarp',
                  "-t_srs",
-                 crs,
+                 srs['proj4'],
                  srcfile,
                  dstfile)
         return dstfile
