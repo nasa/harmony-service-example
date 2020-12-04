@@ -267,13 +267,13 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
     def reproject(self, layerid, srcfile, dstdir):
         srs = self.message.format.process('srs')
-        if not (srs and srs.get('proj4', None)):
+        if not (srs and srs.proj4):
             return srcfile
         normalized_layerid = layerid.replace('/', '_')
         dstfile = "%s/%s" % (dstdir, normalized_layerid + '__reprojected.tif')
         self.cmd('gdalwarp',
                  "-t_srs",
-                 srs['proj4'],
+                 srs.proj4,
                  srcfile,
                  dstfile)
         return dstfile
