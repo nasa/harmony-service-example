@@ -8,20 +8,30 @@ set -e
 image="harmony/gdal"
 tag=${1:-latest}
 
-for dep in harmony-service-lib-py; do
-  if [ -d "../$dep" ]; then
-    rm -rf deps/$dep
-    mkdir -p deps
-    cp -R ../$dep deps/
-    (cd deps/$dep && make clean)
-  else
-    [ ! -d "deps/$dep" ] && git clone git@github.com:nasa/harmony-service-lib-py.git deps/$dep
-  fi
-done
+if [ -d "deps" ]; then
+    rm -rf deps
+fi
+mkdir deps
+
+if [ -d "$LOCAL_HSLP" ]; then
+    HSLP_DIR=$(basename $LOCAL_HSLP)
+    cp -R $LOCAL_HSLP deps/
+fi
+
+# for dep in harmony-service-lib-py; do
+#   if [ -d "../$dep" ]; then
+#     rm -rf deps/$dep
+#     mkdir -p deps
+#     cp -R ../$dep deps/
+#     (cd deps/$dep && make clean)
+#   else
+#     [ ! -d "deps/$dep" ] && git clone https://git.earthdata.nasa.gov/scm/harmony/$dep.git deps/$dep
+#   fi
+# done
 
 # If we're running Docker in Docker (DIND) then the docker daemon is on the host
 if [ -n "$DIND" ]; then
-  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${tag} .
+  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${ag} .
 else
   docker build -t ${image}:${tag} .
 fi

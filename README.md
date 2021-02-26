@@ -13,7 +13,7 @@ For local development:
 1. [pyenv](https://github.com/pyenv/pyenv)
 2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
 
-## Development
+## Local Development
 
 ### Install dependencies
 
@@ -30,7 +30,6 @@ For local development:
 3. (Optional) To use an unreleased version of the `harmony-service-lib-py`, e.g., when testing changes to it, install it as a dependency from the filesystem:
 
         $ git clone https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse ../harmony-service-lib-py
-        $ pip3 install ../harmony-service-lib-py/ --target deps/harmony-service-lib-py
 
 ### Run unit tests:
 
@@ -40,13 +39,17 @@ For local development:
         # Run the tests continuously in watch mode:
         $ ptw -c --ignore deps
 
-### Manually building & deploying
+## Manually building & deploying
 
-1. Build the Docker image:
+1a. Build the Docker image (installs Harmony Service Library from its remote artifact repository):
 
         $ bin/build-image
 
-2. Deploy (publish) the Docker image to Amazon ECR:
+1b. Build the Docker image using a local copy of the Harmony Service Library:
+
+        $ LOCAL_HSLP=../harmony-service-lib-py bin/build-image
+
+2. (Optional) Deploy (publish) the Docker image to Amazon ECR:
 
         $ bin/push-image
 
