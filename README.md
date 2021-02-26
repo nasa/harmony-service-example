@@ -24,8 +24,9 @@ For local development:
 
 2. Create and activate a conda environment containing the development dependencies:
 
-        $ conda env create -n hgdal -f environment.yml
-        $ pyenv activate miniconda3-4.7.12/envs/hgdal
+        $ conda env create -n hgdal
+        $ pyenv activate hgdal
+        $ conda env update --file environment.yml
 
 3. (Optional) To use an unreleased version of the `harmony-service-lib-py`, e.g., when testing changes to it, install it as a dependency from the filesystem:
 
