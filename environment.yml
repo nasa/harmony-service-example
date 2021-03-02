@@ -12,6 +12,5 @@ dependencies:
   - pylint~=2.5
   - pytest~=5.3
   - pip:
-    - --extra-index-url https://maven.earthdata.nasa.gov/repository/python-repo/simple/
-    - harmony-service-lib~=0.0.37
+    - harmony-service-lib~=1.0.4
     - pytest-watch~=4.2

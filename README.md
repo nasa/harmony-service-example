@@ -44,7 +44,7 @@ For local development:
 
 You may want to test Harmony GDAL with an unreleased version of the Harmony Service Library.  This might be someone else's feature or bug-fix branch, or perhaps your own local changes. If you haven't already, clone the Harmony Service Lib and switch to an unreleased branch or make your local changes. Typically this clone would be in a sibling directory of Harmony GDAL:
 
-        $ git clone https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse ../harmony-service-lib-py
+        $ git clone https://github.com/nasa/harmony-service-lib-py ../harmony-service-lib-py
 
 Then install it into your conda environment in development mode. Subsequent changes to the Harmony Service Library will be reflected immediately without need to install it again:
 
@@ -52,13 +52,16 @@ Then install it into your conda environment in development mode. Subsequent chan
 
 ## Building & deploying the Docker image
 
-1a. Build the Docker image (installs Harmony Service Library from its remote artifact repository):
+1. Build the Docker image (installs Harmony Service Library from PyPI):
 
         $ bin/build-image
 
-1b. If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_HSLP` environment variable to its location and build the image as in 1a:
+If the Docker build does not complete and or this breaks your local Docker
+environment, try increasing the memory allocated to your Docker environment.
 
-        $ LOCAL_HSLP=../harmony-service-lib-py bin/build-image
+If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SERVICE_LIB` environment variable to its location and build:
+
+        $ LOCAL_SERVICE_LIB=../harmony-service-lib-py bin/build-image
 
 2. (Optional) Deploy (publish) the Docker image to Amazon ECR:
 

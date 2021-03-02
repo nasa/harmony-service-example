@@ -13,14 +13,15 @@ if [ -d "deps" ]; then
 fi
 mkdir deps
 
-if [ -d "$LOCAL_HSLP" ]; then
-    HSLP_DIR=$(basename $LOCAL_HSLP)
-    cp -R $LOCAL_HSLP deps/
+SERVICE_LIB_DIR="NO_SUCH_DIR"
+if [ -d "$LOCAL_SERVICE_LIB" ]; then
+    SERVICE_LIB_DIR=$(basename $LOCAL_SERVICE_LIB)
+    cp -R $LOCAL_SERVICE_LIB deps/
 fi
 
 # If we're running Docker in Docker (DIND) then the docker daemon is on the host
 if [ -n "$DIND" ]; then
-  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${ag} .
+  docker -H $DOCKER_DAEMON_ADDR build --build-arg service_lib_dir="$SERVICE_LIB_DIR" -t ${image}:${ag} .
 else
-  docker build --network host -t ${image}:${tag} .
+  docker build --build-arg service_lib_dir="$SERVICE_LIB_DIR" --network host -t ${image}:${tag} .
 fi
