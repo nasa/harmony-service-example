@@ -1,6 +1,6 @@
 # harmony-gdal
 
-A demonstration of a subsetter capability to be used with Harmomy.
+A demonstration of a subsetter capability to be used with Harmoy.
 
 ## Prerequisites
 
@@ -24,13 +24,8 @@ For local development:
 
 2. Create and activate a conda environment containing the development dependencies.
 
-   *IMPORTANT*: Activate the NASA VPN first. This project depends on the Harmony Service Library, which is installed from the Nexus artifact repository.
-
-        $ conda env create -n hgdal
-        $ pyenv activate hgdal
-
-        # To update pyenv's 'shims' for executables
-        $ pyenv rehash  
+        $ conda env create -n hgdal --file environment-dev.yml
+        $ conda activate hgdal
 
 ### Run unit tests:
 

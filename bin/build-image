@@ -9,14 +9,15 @@ image="harmony/gdal"
 tag=${1:-latest}
 
 if [ -d "deps" ]; then
-    rm -rf deps
+  rm -rf deps
 fi
 mkdir deps
 
 SERVICE_LIB_DIR="NO_SUCH_DIR"
 if [ -d "$LOCAL_SERVICE_LIB" ]; then
-    SERVICE_LIB_DIR=$(basename $LOCAL_SERVICE_LIB)
-    cp -R $LOCAL_SERVICE_LIB deps/
+  echo "Using local copy of harmony-service-lib"
+  SERVICE_LIB_DIR=$(basename $LOCAL_SERVICE_LIB)
+  cp -R $LOCAL_SERVICE_LIB deps/
 fi
 
 # If we're running Docker in Docker (DIND) then the docker daemon is on the host
