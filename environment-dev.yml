@@ -1,16 +1,10 @@
 channels:
   - conda-forge
 dependencies:
-  - awscli~=1.17
-  - black~=19.10b0
-  - boto3~=1.11
   - flake8~=3.7
-  - gdal~=3.1
   - ipython~=7.9
   - jedi~=0.17.0
-  - pip~=20.1
   - pylint~=2.5
   - pytest~=5.3
   - pip:
-    - harmony-service-lib~=1.0.4
     - pytest-watch~=4.2

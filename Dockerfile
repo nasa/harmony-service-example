@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.7.12
+FROM continuumio/miniconda3:4.9.2-alpine
 
 WORKDIR "/home"
 
@@ -14,9 +14,7 @@ ARG service_lib_dir=NO_SUCH_DIR
 
 # Install a local harmony-service-lib-py if we have one
 COPY deps ./deps/
-RUN if [ -d deps/${service_lib_dir} ]; then echo "OK"; pip install deps/${service_lib_dir}; fi
-# Else install from PiPy - this is done separately to allow caching of primary deps above
-RUN if [ ! -d deps/${service_lib_dir} ]; then pip install harmony-service-lib; fi
+RUN if [ -d deps/${service_lib_dir} ]; then echo "OK"; pip install -e deps/${service_lib_dir}; fi
 
 # Copy the app. This step is last so that Docker can cache layers for the steps above
 COPY . .
