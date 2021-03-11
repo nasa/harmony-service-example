@@ -6,4 +6,4 @@ dependencies:
   - pip~=20.1
   - python=3.8.5
   - pip:
-    - harmony-service-lib~=1.0.4
+    - git+https://github.com/nasa/harmony-service-lib-py.git
