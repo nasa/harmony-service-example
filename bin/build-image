@@ -8,20 +8,21 @@ set -e
 image="harmony/gdal"
 tag=${1:-latest}
 
-for dep in harmony-service-lib-py; do
-  if [ -d "../$dep" ]; then
-    rm -rf deps/$dep
-    mkdir -p deps
-    cp -R ../$dep deps/
-    (cd deps/$dep && make clean)
-  else
-    [ ! -d "deps/$dep" ] && git clone git@github.com:nasa/harmony-service-lib-py.git deps/$dep
-  fi
-done
+if [ -d "deps" ]; then
+  rm -rf deps
+fi
+mkdir deps
+
+SERVICE_LIB_DIR="NO_SUCH_DIR"
+if [ -d "$LOCAL_SERVICE_LIB" ]; then
+  echo "Using local copy of harmony-service-lib"
+  SERVICE_LIB_DIR=$(basename $LOCAL_SERVICE_LIB)
+  cp -R $LOCAL_SERVICE_LIB deps/
+fi
 
 # If we're running Docker in Docker (DIND) then the docker daemon is on the host
 if [ -n "$DIND" ]; then
-  docker -H $DOCKER_DAEMON_ADDR build -t ${image}:${tag} .
+  docker -H $DOCKER_DAEMON_ADDR build --build-arg service_lib_dir="$SERVICE_LIB_DIR" -t ${image}:${ag} .
 else
-  docker build -t ${image}:${tag} .
+  docker build --build-arg service_lib_dir="$SERVICE_LIB_DIR" --network host -t ${image}:${tag} .
 fi

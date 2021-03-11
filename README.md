@@ -1,6 +1,6 @@
 # harmony-gdal
 
-A demonstration of a subsetter capability to be used with Harmomy.
+A demonstration of a subsetter capability to be used with Harmoy.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ For local development:
 1. [pyenv](https://github.com/pyenv/pyenv)
 2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
 
-## Development
+## Local Development
 
 ### Install dependencies
 
@@ -22,15 +22,10 @@ For local development:
         $ pyenv install miniconda3-4.7.12
         $ pyenv local miniconda3-4.7.12
 
-2. Create and activate a conda environment containing the development dependencies:
+2. Create and activate a conda environment containing the development dependencies.
 
-        $ conda env create -n hgdal -f environment.yml
-        $ pyenv activate miniconda3-4.7.12/envs/hgdal
-
-3. (Optional) To use an unreleased version of the `harmony-service-lib-py`, e.g., when testing changes to it, install it as a dependency from the filesystem:
-
-        $ git clone https://git.earthdata.nasa.gov/projects/HARMONY/repos/harmony-service-lib-py/browse ../harmony-service-lib-py
-        $ pip3 install ../harmony-service-lib-py/ --target deps/harmony-service-lib-py
+        $ conda env create -n hgdal --file environment-dev.yml
+        $ conda activate hgdal
 
 ### Run unit tests:
 
@@ -40,13 +35,30 @@ For local development:
         # Run the tests continuously in watch mode:
         $ ptw -c --ignore deps
 
-### Manually building & deploying
+### Developing with a local version of the Harmony Service Library
 
-1. Build the Docker image:
+You may want to test Harmony GDAL with an unreleased version of the Harmony Service Library.  This might be someone else's feature or bug-fix branch, or perhaps your own local changes. If you haven't already, clone the Harmony Service Lib and switch to an unreleased branch or make your local changes. Typically this clone would be in a sibling directory of Harmony GDAL:
+
+        $ git clone https://github.com/nasa/harmony-service-lib-py ../harmony-service-lib-py
+
+Then install it into your conda environment in development mode. Subsequent changes to the Harmony Service Library will be reflected immediately without need to install it again:
+
+        $ pip install -e ../harmony-service-lib
+
+## Building & deploying the Docker image
+
+1. Build the Docker image (installs Harmony Service Library from PyPI):
 
         $ bin/build-image
 
-2. Deploy (publish) the Docker image to Amazon ECR:
+If the Docker build does not complete and or this breaks your local Docker
+environment, try increasing the memory allocated to your Docker environment.
+
+If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SERVICE_LIB` environment variable to its location and build:
+
+        $ LOCAL_SERVICE_LIB=../harmony-service-lib-py bin/build-image
+
+2. (Optional) Deploy (publish) the Docker image to Amazon ECR:
 
         $ bin/push-image
 

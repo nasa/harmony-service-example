@@ -1,2 +1,0 @@
-boto3 >= 1.9.0
-#-e git+https://git.earthdata.nasa.gov/scm/harmony/harmony-service-lib-py.git#egg=harmony
