@@ -99,7 +99,7 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         try:
             # Get the data file
             asset = next(v for k, v in item.assets.items() if 'data' in (v.roles or []))
-            input_filename = download(asset.href, output_dir, logger=self.logger, access_token=self.message.accessToken)
+            input_filename = download(asset.href, output_dir, logger=self.logger, access_token=self.message.accessToken, user_agent=self.message.client)
 
             basename = os.path.basename(generate_output_filename(asset.href, **operations))
 
