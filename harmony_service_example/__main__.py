@@ -3,7 +3,7 @@
 __main__.py
 =========
 
-Runs the harmony_gdal CLI
+Runs the harmony_service_example CLI
 """
 
 import argparse
@@ -21,7 +21,7 @@ def main():
     None
     """
     parser = argparse.ArgumentParser(
-        prog='harmony-gdal', description='Run the GDAL service')
+        prog='harmony_service_example', description='Run the example service')
     harmony.setup_cli(parser)
     args = parser.parse_args()
     if (harmony.is_harmony_cli(args)):

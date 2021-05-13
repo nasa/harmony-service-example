@@ -1,26 +1,26 @@
 import pytest
 
-from harmony_gdal.geo import clip_bbox, latlon_intersection, _range_intersection
+from harmony_service_example.geo import clip_bbox, latlon_intersection, _range_intersection
 
 
 def test_clip_identical():
     dataset_bounds = ([10.0, 20.0], [40.0, 45.0])
     bbox = [10.0, 40.0, 20.0, 45.0]
-    
+
     assert clip_bbox(dataset_bounds, bbox) == [bbox]
 
 def test_clip_larger_bbox():
     dataset_bounds = ([10.0, 20.0], [40.0, 45.0])
     bbox = [0.0, 15.0, 25.0, 49.0]
     expected = [[10.0, 40.0, 20.0, 45.0]]
-    
+
     assert clip_bbox(dataset_bounds, bbox) == expected
 
 def test_clip_non_intersecting_bbox():
     dataset_bounds = ([10.0, 20.0], [40.0, 45.0])
     bbox = [0.0, 5.0, 5.0, 9.0]
     expected = []
-    
+
     assert clip_bbox(dataset_bounds, bbox) == expected
 
 @pytest.mark.parametrize("bbox,expected", [
