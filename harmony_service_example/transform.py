@@ -1,7 +1,7 @@
 # CLI for adapting a Harmony operation to GDAL
 #
 # If you have harmony in a peer folder with this repo, then you can run the following for an example
-#    python3 -m harmony_gdal --harmony-action invoke --harmony-input "$(cat ../harmony/example/service-operation.json)"
+#    python3 -m harmony_service_example --harmony-action invoke --harmony-input "$(cat ../harmony/example/service-operation.json)"
 
 import subprocess
 import os
@@ -9,7 +9,7 @@ import re
 import shutil
 from tempfile import mkdtemp
 
-from harmony_gdal.geo import clip_bbox
+from harmony_service_example.geo import clip_bbox
 from harmony import BaseHarmonyAdapter
 from harmony.util import generate_output_filename, download, HarmonyException, stage
 from pystac import Asset

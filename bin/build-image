@@ -5,7 +5,7 @@ set -e
 # source the .env file if it exists
 [[ -f .env ]] && source .env
 
-image="harmony/gdal"
+image="harmonyservices/service-example"
 tag=${1:-latest}
 
 if [ -d "deps" ]; then

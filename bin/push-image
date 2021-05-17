@@ -2,7 +2,7 @@
 
 set -ex
 
-image="harmony/gdal"
+image="harmonyservices/service-example"
 tag=${1:-latest}
 
 region=${AWS_DEFAULT_REGION-"us-west-2"}

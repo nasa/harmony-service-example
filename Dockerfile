@@ -10,7 +10,7 @@ RUN apk add git
 COPY environment.yml .
 RUN conda env update --file environment.yml -n base
 
-# This is below the preceding layer to prevent Docker from rebuilding the 
+# This is below the preceding layer to prevent Docker from rebuilding the
 # previous layer (forcing a conda reload of dependencies) whenever the
 # status of a local service library changes
 ARG service_lib_dir=NO_SUCH_DIR
@@ -22,4 +22,4 @@ RUN if [ -d deps/${service_lib_dir} ]; then echo "OK"; pip install -e deps/${ser
 # Copy the app. This step is last so that Docker can cache layers for the steps above
 COPY . .
 
-ENTRYPOINT ["python", "-m", "harmony_gdal"]
+ENTRYPOINT ["python", "-m", "harmony_service_example"]

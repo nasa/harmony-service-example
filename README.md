@@ -1,7 +1,10 @@
-# harmony-gdal
+# Harmony Service Example
 
-A demonstration of a subsetter capability to be used with Harmoy.
+A demonstration of a subsetter capability based on GDAL to be used with Harmony.
 
+These instructions only apply to building and developing the service.  The example
+service will be pulled automatically by Harmony from the `harmonyservices/service-example`
+repository on demand.
 ## Prerequisites
 
 For building & pushing the image locally:
@@ -24,8 +27,8 @@ For local development:
 
 2. Create and activate a conda environment containing the development dependencies.
 
-        $ conda env create -n hgdal --file environment-dev.yml
-        $ conda activate hgdal
+        $ conda env create -n hsexample --file environment-dev.yml
+        $ conda activate hsexample
 
 ### Run unit tests:
 
