@@ -33,7 +33,7 @@ mime_to_options = {
 }
 
 
-class ObjectView(object):
+class ObjectView(dict):
     """
     Simple class to make a dict look like an object.
 
@@ -43,18 +43,8 @@ class ObjectView(object):
         >>> o.key
         'value'
     """
-    def __init__(self, d):
-        """
-        Allows accessing the keys of dictionary d as though they
-        are properties on an object
-
-        Parameters
-        ----------
-        d : dict
-            a dictionary whose keys we want to access as object properties
-        """
-        self.__dict__ = d
-
+    __getattr__ = dict.get
+    
 
 class HarmonyAdapter(BaseHarmonyAdapter):
     """
