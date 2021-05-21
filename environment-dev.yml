@@ -6,5 +6,6 @@ dependencies:
   - jedi~=0.17.0
   - pylint~=2.5
   - pytest~=5.3
+  - pip~=20.1
   - pip:
     - pytest-watch~=4.2
