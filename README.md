@@ -14,7 +14,7 @@ For building & pushing the image locally:
 For local development:
 
 1. [pyenv](https://github.com/pyenv/pyenv)
-2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
+2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) (optional)
 
 ## Local Development
 
@@ -70,7 +70,7 @@ If you'd like the Docker image to include a local version of the Harmony Service
 If you plan to build the Docker image from a container, in addition to the above instructions, you'll want to create a .env file and populate it with the following:
 
 ```
-# Harmony-GDAL Environment Variables
+# Harmony-Service-Example Environment Variables
 
 # Set to 'true' if running Docker in Docker and the docker daemon is somewhere other than the current context
 DIND=true
