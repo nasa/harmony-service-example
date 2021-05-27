@@ -12,6 +12,7 @@ import harmony
 
 from .transform import HarmonyAdapter
 
+
 def main():
     """
     Parses command line arguments and invokes the appropriate method to respond to them
@@ -28,6 +29,7 @@ def main():
         harmony.run_cli(parser, args, HarmonyAdapter)
     else:
         parser.error("Only --harmony CLIs are supported")
+
 
 if __name__ == "__main__":
     main()
