@@ -57,9 +57,9 @@ Then install it into your conda environment in development mode. Subsequent chan
 If the Docker build does not complete and or this breaks your local Docker
 environment, try increasing the memory allocated to your Docker environment.
 
-If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SERVICE_LIB` environment variable to its location and build:
+If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SVCLIB_DIR` environment variable to its location and build:
 
-        $ LOCAL_SERVICE_LIB=../harmony-service-lib-py bin/build-image
+        $ LOCAL_SVCLIB_DIR=../harmony-service-lib-py bin/build-image
 
 2. (Optional) Deploy (publish) the Docker image to Amazon ECR:
 
