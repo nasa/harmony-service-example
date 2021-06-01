@@ -6,6 +6,9 @@ install:
 test:
 	pytest --ignore deps
 
+lint:
+	flake8 harmony_service_example
+
 test-watch:
 	ptw -c --ignore deps
 
