@@ -67,7 +67,7 @@ If you'd like the Docker image to include a local version of the Harmony Service
 
 ### Building from Dev Container
 
-If you plan to build the Docker image from a container, in addition to the above instructions, you'll want to create a .env file and populate it with the following:
+If you plan to build the Docker image and are running Docker in Docker, you'll also want to create a .env file and populate it with the following:
 
 ```
 # Harmony-Service-Example Environment Variables
