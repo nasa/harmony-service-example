@@ -13,22 +13,13 @@ For building & pushing the image locally:
 
 For local development:
 
-1. [pyenv](https://github.com/pyenv/pyenv)
-2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) (optional)
+1. miniconda3-4.7.12
 
 ## Local Development
 
 ### Install dependencies
 
-1. Install & use miniconda:
-
-        $ pyenv install miniconda3-4.7.12
-        $ pyenv local miniconda3-4.7.12
-
-2. Create and activate a conda environment containing the development dependencies.
-
-        $ conda env create -n venv --file environment-dev.yml
-        $ conda activate venv
+1. Create and activate a [conda virtual environment](./ENVHELP.md) from environment-dev.yml.
 
 ### Run unit tests:
 
