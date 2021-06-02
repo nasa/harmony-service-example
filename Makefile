@@ -1,4 +1,4 @@
-.PHONY: install test test-watch build-image push-image
+.PHONY: install test lint test-watch build-image push-image
 
 install:
 	conda-env update --file environment-dev.yml
