@@ -38,3 +38,5 @@ Ensure that pyenv is currently using the [right version](https://github.com/pyen
 - activate: `$ conda activate venv`
 
 - deactivate: `$ conda deactivate`
+
+Most shells can also be setup to automatically activate & deactivate virtual environments when cd'ing into & out of directories by using the value found in `.python-version`. This is convenient since it ensures that the correct virtualenv has been activated (and deactivated) when starting work on a project. See the pyenv and pyenv-virtualenv docs for more details.
