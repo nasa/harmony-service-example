@@ -1,7 +1,9 @@
 # CLI for adapting a Harmony operation to GDAL
 #
-# If you have harmony in a peer folder with this repo, then you can run the following for an example
-#    python3 -m harmony_service_example --harmony-action invoke --harmony-input "$(cat ../harmony/example/service-operation.json)"
+# If you have harmony in a peer folder with this repo, then you can run the following for an
+# example:
+#    python3 -m harmony_service_example --harmony-action invoke --harmony-input \
+#    "$(cat ../harmony/example/service-operation.json)"
 
 import subprocess
 import os
@@ -44,7 +46,7 @@ class ObjectView(dict):
         'value'
     """
     __getattr__ = dict.get
-    
+
 
 class HarmonyAdapter(BaseHarmonyAdapter):
     """
@@ -71,7 +73,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         logger = self.logger
         message = self.message
         if message.subset and message.subset.shape:
-            logger.warn('Ignoring subset request for user shapefile %s' % (message.subset.shape.href,))
+            logger.warn('Ignoring subset request for user shapefile %s' %
+                        (message.subset.shape.href,))
 
         layernames = []
 
@@ -89,7 +92,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         try:
             # Get the data file
             asset = next(v for k, v in item.assets.items() if 'data' in (v.roles or []))
-            input_filename = download(asset.href, output_dir, logger=self.logger, access_token=self.message.accessToken)
+            input_filename = download(asset.href, output_dir, logger=self.logger,
+                                      access_token=self.message.accessToken)
 
             basename = os.path.basename(generate_output_filename(asset.href, **operations))
 
@@ -149,10 +153,12 @@ class HarmonyAdapter(BaseHarmonyAdapter):
 
             output_filename = basename + os.path.splitext(filename)[-1]
             mime = message.format.mime
-            url = stage(filename, output_filename, mime, location=message.stagingLocation, logger=logger)
+            url = stage(filename, output_filename, mime,
+                        location=message.stagingLocation, logger=logger)
 
             # Update the STAC record
-            result.assets['data'] = Asset(url, title=output_filename, media_type=mime, roles=['data'])
+            result.assets['data'] = Asset(url, title=output_filename,
+                                          media_type=mime, roles=['data'])
 
             # Return the STAC record
             return result
@@ -243,8 +249,8 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         y = ds.RasterYSize
         gt = ds.GetGeoTransform()
 
-        x_range = [gt[0], gt[0] + x*gt[1] + y*gt[2]]
-        y_range = [gt[3], gt[3] + x*gt[4] + y*gt[5]]
+        x_range = [gt[0], gt[0] + x * gt[1] + y * gt[2]]
+        y_range = [gt[3], gt[3] + x * gt[4] + y * gt[5]]
 
         # Apparently the geo transform's pixel size can be negative, so
         # sometimes we have to reverse the range. Why?
@@ -339,13 +345,15 @@ class HarmonyAdapter(BaseHarmonyAdapter):
         gdalinfo_lines = self.cmd("gdalinfo", filename)
         result = []
         # Normal case of NetCDF / HDF, where variables are subdatasets
-        for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)), gdalinfo_lines):
+        for subdataset in filter((lambda line: re.match(r"^\s*SUBDATASET_\d+_NAME=", line)),
+                                 gdalinfo_lines):
             result.append(ObjectView({"name": re.split(r":", subdataset)[-1]}))
         if len(result) > 0:
             return result
 
         # GeoTIFFs, where variables are bands, with descriptions set to their variable name
-        for subdataset in filter((lambda line: re.match(r"^\s*Description = ", line)), gdalinfo_lines):
+        for subdataset in filter((lambda line: re.match(r"^\s*Description = ", line)),
+                                 gdalinfo_lines):
             result.append(ObjectView({"name": re.split(r" = ", subdataset)[-1]}))
         return result
 

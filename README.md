@@ -13,30 +13,22 @@ For building & pushing the image locally:
 
 For local development:
 
-1. [pyenv](https://github.com/pyenv/pyenv)
-2. [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
+1. miniconda3-4.7.12 (can be installed via pyenv)
 
 ## Local Development
 
 ### Install dependencies
 
-1. Install & use miniconda:
-
-        $ pyenv install miniconda3-4.7.12
-        $ pyenv local miniconda3-4.7.12
-
-2. Create and activate a conda environment containing the development dependencies.
-
-        $ conda env create -n hsexample --file environment-dev.yml
-        $ conda activate hsexample
+1. Create a [conda virtual environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html):  `$ conda env create -n venv --file environment-dev.yml`
+2. Activate the virtual environment: `$ conda activate venv`
 
 ### Run unit tests:
 
         # Run the tests once:
-        $ pytest --ignore deps
+        $ make test
 
         # Run the tests continuously in watch mode:
-        $ ptw -c --ignore deps
+        $ make test-watch
 
 ### Developing with a local version of the Harmony Service Library
 
@@ -52,25 +44,25 @@ Then install it into your conda environment in development mode. Subsequent chan
 
 1. Build the Docker image (installs Harmony Service Library from PyPI):
 
-        $ bin/build-image
+        $ make build-image
 
 If the Docker build does not complete and or this breaks your local Docker
 environment, try increasing the memory allocated to your Docker environment.
 
-If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SERVICE_LIB` environment variable to its location and build:
+If you'd like the Docker image to include a local version of the Harmony Service Library, set the `LOCAL_SVCLIB_DIR` environment variable to its location and build:
 
-        $ LOCAL_SERVICE_LIB=../harmony-service-lib-py bin/build-image
+        $ make build-image LOCAL_SVCLIB_DIR=../harmony-service-lib-py
 
 2. (Optional) Deploy (publish) the Docker image to Amazon ECR:
 
-        $ bin/push-image
+        $ make push-image
 
 ### Building from Dev Container
 
-If you plan to build the Docker image from a container, in addition to the above instructions, you'll want to create a .env file and populate it with the following:
+If you plan to build the Docker image and are running Docker in Docker, you'll also want to create a .env file and populate it with the following:
 
 ```
-# Harmony-GDAL Environment Variables
+# Harmony-Service-Example Environment Variables
 
 # Set to 'true' if running Docker in Docker and the docker daemon is somewhere other than the current context
 DIND=true
