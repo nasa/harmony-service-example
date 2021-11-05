@@ -38,7 +38,7 @@ You may want to test Harmony GDAL with an unreleased version of the Harmony Serv
 
 Then install it into your conda environment in development mode. Subsequent changes to the Harmony Service Library will be reflected immediately without need to install it again:
 
-        $ pip install -e ../harmony-service-lib
+        $ pip install -e ../harmony-service-lib-py
 
 ## Building & deploying the Docker image
 
