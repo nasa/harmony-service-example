@@ -1,4 +1,4 @@
-# Harmony Services Example
+# Harmony Services Examples
 
 A demonstration of a subsetter capability based on GDAL to be used with Harmony.
 
