@@ -22,12 +22,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v2
-      - name: Build image
-        run: |
-          mkdir -p deps
-          docker build . --file Dockerfile --tag "${GITHUB_REPOSITORY}" --label "runnumber=${GITHUB_RUN_ID}"
-      - name: Log into registry
-        run: echo "${{ secrets.DOCKERHUB }}" | docker login -u "${DOCKER_USER}" --password-stdin
       - name: Push image
         run: |
           IMAGE_NAME=${IMAGE_NAME:-$(echo "${GITHUB_REPOSITORY}" | sed "s,^${GIT_PREFIX},${DOCKER_PREFIX},g")}
