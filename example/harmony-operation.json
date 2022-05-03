@@ -1,14 +1,13 @@
 {
-  "$schema": "../../harmony/app/schemas/data-operation/0.14.0/data-operation-v0.14.0.json",
-  "version": "0.14.0",
+  "$schema": "../../harmony/app/schemas/data-operation/0.15.0/data-operation-v0.15.0.json",
+  "version": "0.15.0",
   "callback": "http://localhost/some-path",
   "stagingLocation": "s3://example-bucket/public/some-org/some-service/some-uuid/",
   "user": "jdoe",
   "sources": [
     {
       "collection": "C1233800302-EEDTEST",
-      "variables": [
-        {
+      "variables": [{
           "id": "V1233801695-EEDTEST",
           "name": "red_var",
           "fullPath":"red_var",
@@ -20,9 +19,17 @@
             "url": "http://example.com/file649.txt",
             "mimeType": "text/plain",
             "format": "ASCII"
-          }]
-        }
-      ],
+          }],
+          "type": "SCIENCE_VARIABLE",
+          "subtype": "OTHER"
+      }],
+      "coordinateVariables": [{
+        "fullPath": "lat",
+        "id": "V1233801718-EEDTEST",
+        "name": "lat",
+        "subtype": "LATITUDE",
+        "type": "COORDINATE"
+      }],
       "granules": [
         {
           "id": "G1233800343-EEDTEST",
