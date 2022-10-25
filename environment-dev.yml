@@ -1,7 +1,7 @@
 channels:
   - conda-forge
 dependencies:
-  - flake8~=3.7
+  - flake8~=5.0.4
   - ipython~=7.9
   - jedi~=0.17.0
   - pylint~=2.5
