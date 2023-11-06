@@ -5,6 +5,7 @@
 #    python3 -m harmony_service_example --harmony-action invoke --harmony-input \
 #    "$(cat ../harmony/example/service-operation.json)"
 
+import datetime
 import subprocess
 import os
 import re
@@ -13,8 +14,9 @@ from tempfile import mkdtemp
 
 from harmony_service_example.geo import clip_bbox
 from harmony import BaseHarmonyAdapter
+from harmony.exceptions import ServerException
 from harmony.util import generate_output_filename, download, HarmonyException, stage
-from pystac import Asset
+from pystac import Asset, Catalog, Item
 
 from osgeo import gdal
 
@@ -54,117 +56,19 @@ class HarmonyAdapter(BaseHarmonyAdapter):
     for documentation and examples.
     """
 
-    def process_item(self, item, source):
-        """
-        Converts an input STAC Item's data into Zarr, returning an output STAC item
+    def invoke(self):
+        catalogs = [
+            Catalog('a', ''), Catalog('b', ''), Catalog('c', '')]
+        for cat in catalogs:
+            items = [
+                Item(f'item-1-from-catalog-{cat.id}', None, [0, 0, 1, 1],
+                     datetime.datetime.strptime('09/19/22 13:55:26', '%m/%d/%y %H:%M:%S'), {}),
+                Item(f'item-2-from-catalog-{cat.id}', None, [0, 0, 1, 2],
+                    datetime.datetime.strptime('09/19/22 13:55:26', '%m/%d/%y %H:%M:%S'), {})
+            ]
+            cat.add_items(items)
+        return (self.message, catalogs)
 
-        Parameters
-        ----------
-        item : pystac.Item
-            the item that should be converted
-        source : harmony.message.Source
-            the input source defining the variables, if any, to subset from the item
-
-        Returns
-        -------
-        pystac.Item
-            a STAC item containing the Zarr output
-        """
-        logger = self.logger
-        message = self.message
-        if message.subset and message.subset.shape:
-            logger.warn('Ignoring subset request for user shapefile %s' %
-                        (message.subset.shape.href,))
-
-        layernames = []
-
-        operations = dict(
-            variable_subset=source.variables,
-            is_regridded=bool(message.format.srs),
-            is_subsetted=bool(message.subset and message.subset.bbox)
-        )
-
-        result = item.clone()
-        result.assets = {}
-
-        # Create a temporary dir for processing we may do
-        output_dir = mkdtemp()
-        try:
-            # Get the data file
-            asset = next(v for k, v in item.assets.items() if 'data' in (v.roles or []))
-            input_filename = download(asset.href, output_dir, logger=self.logger,
-                                      access_token=self.message.accessToken)
-
-            basename = os.path.basename(generate_output_filename(asset.href, **operations))
-
-            variables = source.variables or self.get_variables(input_filename)
-            is_geotiff = self.is_geotiff(input_filename)
-
-            for variable in variables:
-                band = None
-                if is_geotiff:
-                    # For geotiffs, we can't reference variables by name but need to reference
-                    # by raster band instead
-                    index = next(i for i, v in enumerate(variables) if v.name == variable.name)
-                    if index is None:
-                        raise HarmonyException('Band not found: ' + variable)
-                    band = index + 1
-                    filename = input_filename
-                else:
-                    # For non-geotiffs, we reference variables by appending a file path
-                    layer_format = self.read_layer_format(
-                        source.collection,
-                        input_filename,
-                        variable.name
-                    )
-                    filename = layer_format.format(input_filename)
-
-                layer_id = basename + '__' + variable.name
-                filename = self.as_geotiff(
-                    layer_id,
-                    filename,
-                    output_dir,
-                    band
-                )
-                filename = self.subset(
-                    layer_id,
-                    filename,
-                    output_dir
-                )
-                filename = self.reproject(
-                    layer_id,
-                    filename,
-                    output_dir
-                )
-                filename = self.resize(
-                    layer_id,
-                    filename,
-                    output_dir
-                )
-                filename = self.add_to_result(
-                    layer_id,
-                    filename,
-                    output_dir
-                )
-                layernames.append(layer_id)
-
-            self.update_layernames(filename, [v.name for v in variables])
-            filename = self.reformat(filename, output_dir)
-
-            output_filename = basename + os.path.splitext(filename)[-1]
-            mime = message.format.mime
-            url = stage(filename, output_filename, mime,
-                        location=message.stagingLocation, logger=logger)
-
-            # Update the STAC record
-            result.assets['data'] = Asset(url, title=output_filename,
-                                          media_type=mime, roles=['data'])
-
-            # Return the STAC record
-            return result
-        finally:
-            # Clean up any intermediate resources
-            shutil.rmtree(output_dir)
 
     def update_layernames(self, filename, layernames):
         """
