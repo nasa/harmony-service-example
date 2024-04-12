@@ -3,7 +3,7 @@
 # If you have harmony in a peer folder with this repo, then you can run the following for an
 # example:
 #    python3 -m harmony_service_example --harmony-action invoke --harmony-input \
-#    "$(cat ../harmony/example/service-operation.json)"
+#    "$(cat ../harmony/services/harmony/example/service-operation.json)"
 
 import subprocess
 import os
