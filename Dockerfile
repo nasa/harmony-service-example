@@ -1,14 +1,15 @@
-FROM continuumio/miniconda3:4.9.2-alpine
+FROM continuumio/miniconda3:24.7.1-0
 
 WORKDIR "/home"
 
 # Install the app dependencies into the base conda environment so we
 # don't need to activate a conda environment when running.
 # Need git to install harmony-service library from github
-RUN apk update
-RUN apk add git
+# RUN apk update
+# RUN apk add git
 COPY environment.yml .
 RUN conda env update --file environment.yml -n base
+RUN conda install -c conda-forge libgdal-hdf5
 
 # This is below the preceding layer to prevent Docker from rebuilding the
 # previous layer (forcing a conda reload of dependencies) whenever the

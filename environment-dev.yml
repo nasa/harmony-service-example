@@ -5,7 +5,7 @@ dependencies:
   - ipython~=7.9
   - jedi~=0.17.0
   - pylint~=2.5
-  - pytest~=5.3
+  - pytest~=7.4.4
   - pip~=20.1
   - pip:
     - pytest-watch~=4.2
