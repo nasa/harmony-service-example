@@ -1,9 +1,9 @@
 channels:
   - conda-forge
 dependencies:
-  - boto3~=1.11
+  - boto3~=1.35.24
   - gdal~=3.1
   - pip~=20.1
-  - python=3.8.5
+  - python=3.9
   - pip:
     - git+https://github.com/nasa/harmony-service-lib-py.git
