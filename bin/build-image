@@ -20,9 +20,14 @@ if [ -d "$LOCAL_SVCLIB_DIR" ]; then
   cp -R $LOCAL_SVCLIB_DIR deps/
 fi
 
+PLATFORM_ARG=""
+if [ -n "$PLATFORM" ]; then
+  PLATFORM_ARG="--platform ${PLATFORM}"
+fi
+
 # If we're running Docker in Docker (DIND) then the docker daemon is on the host
 if [ -n "$DIND" ]; then
-  docker -H $DOCKER_DAEMON_ADDR build --build-arg service_lib_dir="$SERVICE_LIB_DIR" -t ${image}:${ag} .
+  docker -H $DOCKER_DAEMON_ADDR build ${PLATFORM_ARG} --build-arg service_lib_dir="$SERVICE_LIB_DIR" -t ${image}:${ag} .
 else
-  docker build --platform linux/amd64 --build-arg service_lib_dir="$SERVICE_LIB_DIR" --network host -t ${image}:${tag} .
+  docker build ${PLATFORM_ARG} --build-arg service_lib_dir="$SERVICE_LIB_DIR" --network host -t ${image}:${tag} .
 fi
