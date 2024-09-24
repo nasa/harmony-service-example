@@ -67,6 +67,9 @@ If you plan to build the Docker image and are running Docker in Docker, you'll a
 # Set to 'true' if running Docker in Docker and the docker daemon is somewhere other than the current context
 DIND=true
 
+# Set the PLATFORM varible to define the platform of the build output 
+PLATFORM=linux/amd64
+
 # Indicates where docker commands should find the docker daemon
 DOCKER_DAEMON_ADDR=host.docker.internal:2375
 ```
