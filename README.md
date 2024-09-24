@@ -13,7 +13,7 @@ For building & pushing the image locally:
 
 For local development:
 
-1. miniconda3-4.7.12 (can be installed via pyenv)
+1. miniconda3-24.7.1 (can be installed via pyenv)
 
 ## Local Development
 
@@ -32,7 +32,7 @@ For local development:
 
 ### Developing with a local version of the Harmony Service Library
 
-You may want to test Harmony GDAL with an unreleased version of the Harmony Service Library.  This might be someone else's feature or bug-fix branch, or perhaps your own local changes. If you haven't already, clone the Harmony Service Lib and switch to an unreleased branch or make your local changes. Typically this clone would be in a sibling directory of Harmony GDAL:
+You may want to test Harmony Service Example with an unreleased version of the Harmony Service Library.  This might be someone else's feature or bug-fix branch, or perhaps your own local changes. If you haven't already, clone the Harmony Service Library and switch to an unreleased branch or make your local changes. Typically this clone would be in a sibling directory of Harmony Service Example:
 
         $ git clone https://github.com/nasa/harmony-service-lib-py ../harmony-service-lib-py
 
