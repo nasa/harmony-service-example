@@ -6,7 +6,6 @@ WORKDIR "/home"
 # don't need to activate a conda environment when running.
 COPY environment.yml .
 RUN conda env update --file environment.yml -n base
-RUN conda install -c conda-forge libgdal-hdf5
 
 # This is below the preceding layer to prevent Docker from rebuilding the
 # previous layer (forcing a conda reload of dependencies) whenever the
