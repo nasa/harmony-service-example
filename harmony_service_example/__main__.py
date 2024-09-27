@@ -8,7 +8,7 @@ Runs the harmony_service_example CLI
 
 import argparse
 import logging
-import harmony
+import harmony_service_lib
 
 from .transform import HarmonyAdapter
 
@@ -23,10 +23,10 @@ def main():
     """
     parser = argparse.ArgumentParser(
         prog='harmony_service_example', description='Run the example service')
-    harmony.setup_cli(parser)
+    harmony_service_lib.setup_cli(parser)
     args = parser.parse_args()
-    if (harmony.is_harmony_cli(args)):
-        harmony.run_cli(parser, args, HarmonyAdapter)
+    if (harmony_service_lib.is_harmony_cli(args)):
+        harmony_service_lib.run_cli(parser, args, HarmonyAdapter)
     else:
         parser.error("Only --harmony CLIs are supported")
 
