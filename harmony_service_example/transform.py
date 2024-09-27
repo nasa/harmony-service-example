@@ -12,8 +12,8 @@ import shutil
 from tempfile import mkdtemp
 
 from harmony_service_example.geo import clip_bbox
-from harmony import BaseHarmonyAdapter
-from harmony.util import generate_output_filename, download, HarmonyException, stage
+from harmony_service_lib import BaseHarmonyAdapter
+from harmony_service_lib.util import generate_output_filename, download, HarmonyException, stage
 from pystac import Asset
 
 from osgeo import gdal

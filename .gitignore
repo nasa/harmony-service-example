@@ -133,3 +133,5 @@ deps
 
 # Snyk / Deepcode AI
 .dccache
+
+.vscode

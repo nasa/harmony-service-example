@@ -8,7 +8,7 @@ args=""
 
 if [ -d ../harmony-service-lib-py ]; then
   (cd ../harmony-service-lib-py && make clean)
-  args="$args -v $(pwd)/../harmony-service-lib-py/harmony:/usr/lib/harmony-service-lib-py/harmony"
+  args="$args -v $(pwd)/../harmony-service-lib-py/harmony_service_lib:/usr/lib/harmony-service-lib-py/harmony_service_lib"
   args="$args -e PYTHONPATH=/usr/lib/harmony-service-lib-py"
 fi
 
