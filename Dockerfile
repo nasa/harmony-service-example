@@ -7,6 +7,9 @@ WORKDIR "/home"
 COPY environment.yml .
 RUN conda env update --file environment.yml -n base
 
+ENV PROJ_LIB=/opt/conda/share/proj
+ENV GDAL_DATA=/opt/conda/share/gdal
+
 # This is below the preceding layer to prevent Docker from rebuilding the
 # previous layer (forcing a conda reload of dependencies) whenever the
 # status of a local service library changes
