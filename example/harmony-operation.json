@@ -1,6 +1,6 @@
 {
-  "$schema": "../../harmony/app/schemas/data-operation/0.18.0/data-operation-v0.19.0.json",
-  "version": "0.18.0",
+  "$schema": "../../harmony/app/schemas/data-operation/0.20.0/data-operation-v0.20.0.json",
+  "version": "0.20.0",
   "callback": "http://localhost/some-path",
   "stagingLocation": "s3://example-bucket/public/some-org/some-service/some-uuid/",
   "user": "jdoe",
@@ -86,6 +86,7 @@
   "requestId": "c045c793-19f1-43b5-9547-c87a5c7dfadb",
   "client": "harmony-sit",
   "concatenate": false,
+  "average": "time",
   "extendDimensions": ["lat", "lon"],
   "extraArgs": {
     "cut": false
