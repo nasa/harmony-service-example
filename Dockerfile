@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:24.7.1-0
+FROM continuumio/miniconda3:24.9.2-0
 
 WORKDIR "/home"
 
