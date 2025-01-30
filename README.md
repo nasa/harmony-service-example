@@ -1,6 +1,6 @@
 # Harmony Service Example
 
-A demonstration of a subsetter capability based on GDAL to be used with Harmony
+A demonstration of a subsetter capability based on GDAL to be used with Harmony.
 
 These instructions only apply to building and developing the service.  The example
 service will be pulled automatically by Harmony from the `harmonyservices/service-example`
