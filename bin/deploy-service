@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Script to deploy harmony-service-example from Bamboo
+# Usage example: bin/deploy-service
+# Required environment:
+#   bamboo_HARMONY_ENVIRONMENT: The name of the Harmony environment - sit, uat, or prod
+#   bamboo_COOKIE_SECRET: The cookie secret of the Harmony environment
+#
+# Optional parameter:
+#   tag: the tag of harmony-service-example image, defaults to "latest"
+#        It is only added for completeness and may be invoked manually. Not used in Bamboo.
+
+set -e
+
+tag=${1:-latest}
+
+# Define Harmony root url for different deployment environments
+case "$bamboo_HARMONY_ENVIRONMENT" in
+  "sandbox")
+    echo "sandbox environment is not supported. Exit."
+    exit 1
+    ;;
+  "sit")
+    harmony_root="https://harmony.sit.earthdata.nasa.gov"
+    ;;
+  "uat")
+    harmony_root="https://harmony.uat.earthdata.nasa.gov"
+    ;;
+  "prod")
+    harmony_root="https://harmony.earthdata.nasa.gov"
+    ;;
+  *)
+    harmony_root=""
+    ;;
+esac
+
+# Check if harmony_root is not empty
+if [ -n "$harmony_root" ]; then
+  echo "Deploy harmony-service-example"
+  http_status=$(curl -s -o /dev/null -w "%{http_code}" -X PUT -H "Cookie-Secret: $bamboo_COOKIE_SECRET" -H "Content-type: application/json" $harmony_root/service-image-tag/harmony-service-example -d "{\"tag\": \"$tag\"}")
+
+  echo "Deploy harmony-service-example service returned HTTP status code: $http_status"
+  if [ "$http_status" -eq 423 ]; then
+    echo "Unable to acquire deployment lock. Exit."
+    exit 1
+  elif [ "$http_status" -eq 403 ]; then
+    echo "Unable to deploy harmony-service-example due to access denied. Exit."
+    exit 1
+  elif [ "$http_status" -ge 400 ]; then
+    echo "Unable to deploy harmony-service-example, status code: $http_status. Exit."
+    exit 1
+  else
+    echo "Successfully triggered deployment of harmony-service-example with image tag: $tag."
+  fi
+fi
