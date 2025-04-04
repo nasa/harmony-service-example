@@ -30,7 +30,8 @@ case "$bamboo_HARMONY_ENVIRONMENT" in
     harmony_root="https://harmony.earthdata.nasa.gov"
     ;;
   *)
-    harmony_root=""
+    echo "bamboo_HARMONY_ENVIRONMENT environment variable must be one of sit, uat or prod. Exit."
+    exit 1
     ;;
 esac
 
