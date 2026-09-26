@@ -230,7 +230,9 @@ class HarmonyAdapter(BaseHarmonyAdapter):
             dstfile = "%s/%s" % (dstdir, normalized_layerid + f"__{i}_subsetted.tif")
             dstfiles.append(dstfile)
             bbox = [str(c) for c in bbox]
-            crop_command = command + ["-projwin", bbox[0], bbox[3], bbox[2], bbox[1], srcfile, dstfile]
+            crop_command = command + [
+                "-projwin", bbox[0], bbox[3], bbox[2], bbox[1], srcfile, dstfile
+            ]
             self.cmd(*crop_command)
 
         if len(dstfiles) == 1:
