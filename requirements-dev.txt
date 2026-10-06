@@ -1,0 +1,6 @@
+flake8~=5.0.4
+ipython~=7.9
+jedi~=0.17.0
+pylint~=2.5
+pytest~=7.4.4
+pytest-watch~=4.2

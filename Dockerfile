@@ -1,20 +1,24 @@
-FROM continuumio/miniconda3:24.9.2-0
+FROM ghcr.io/osgeo/gdal:ubuntu-full-3.10.0
+
 
 WORKDIR "/home"
 
-# Ensure pip is installed and up to date
-RUN conda install --yes pip && pip install --upgrade pip setuptools
+# The base image's system Python is marked externally-managed (PEP 668); this
+# container has no system packages to protect, so let pip install into it.
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
-# Install the app dependencies into the base conda environment so we
-# don't need to activate a conda environment when running.
-COPY environment.yml .
-RUN conda env update --file environment.yml -n base
+# This image already provides GDAL and its Python bindings built against its
+# own libgdal; only pip itself needs to be installed on top of it.
+RUN rm -f /etc/apt/sources.list.d/apache-arrow.sources \
+    && apt-get update && apt-get install -y --no-install-recommends python3-pip git \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PROJ_LIB=/opt/conda/share/proj
-ENV GDAL_DATA=/opt/conda/share/gdal
+# Install the app dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # This is below the preceding layer to prevent Docker from rebuilding the
-# previous layer (forcing a conda reload of dependencies) whenever the
+# previous layer (forcing a pip reinstall of dependencies) whenever the
 # status of a local service library changes
 ARG service_lib_dir=NO_SUCH_DIR
 
@@ -22,7 +26,7 @@ ARG service_lib_dir=NO_SUCH_DIR
 COPY deps ./deps/
 RUN if [ -d "deps/${service_lib_dir}" ]; then \
       echo "Installing from local copy of harmony-service-lib"; \
-      cd deps/${service_lib_dir} && pip install .; \
+      cd deps/${service_lib_dir} && pip3 install .; \
     else \
       echo "No local harmony-service-lib found, skipping install."; \
     fi
@@ -30,4 +34,4 @@ RUN if [ -d "deps/${service_lib_dir}" ]; then \
 # Copy the app. This step is last so that Docker can cache layers for the steps above
 COPY . .
 
-ENTRYPOINT ["python", "-m", "harmony_service_example"]
+ENTRYPOINT ["python3", "-m", "harmony_service_example"]

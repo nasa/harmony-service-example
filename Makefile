@@ -1,7 +1,7 @@
 .PHONY: install test lint test-watch build-image push-image
 
 install:
-	conda env update --file environment-dev.yml
+	pip install -r requirements-dev.txt
 
 test:
 	pytest --ignore deps

@@ -13,14 +13,15 @@ For building & pushing the image locally:
 
 For local development:
 
-1. miniconda3-24.7.1 (can be installed via pyenv)
+1. Python 3.10 (can be installed via pyenv)
 
 ## Local Development
 
 ### Install dependencies
 
-1. Create a [conda virtual environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html):  `$ conda env create -n venv --file environment-dev.yml`
-2. Activate the virtual environment: `$ conda activate venv`
+1. Create a virtual environment: `$ python3 -m venv venv`
+2. Activate the virtual environment: `$ source venv/bin/activate`
+3. Install dev dependencies: `$ make install`
 
 ### Run unit tests:
 
@@ -36,7 +37,7 @@ You may want to test Harmony Service Example with an unreleased version of the H
 
         $ git clone https://github.com/nasa/harmony-service-lib-py ../harmony-service-lib-py
 
-Then install it into your conda environment in development mode. Subsequent changes to the Harmony Service Library will be reflected immediately without need to install it again:
+Then install it into your virtual environment in development mode. Subsequent changes to the Harmony Service Library will be reflected immediately without need to install it again:
 
         $ pip install -e ../harmony-service-lib-py
 

@@ -1,0 +1,2 @@
+boto3~=1.35.24
+git+https://github.com/nasa/harmony-service-lib-py.git
