@@ -1,5 +1,14 @@
 example
 test
+tests
 spec
 **/*.log
 **/tmp
+**/__pycache__
+.git
+.github
+.devcontainer
+.vscode
+.pytest_cache
+.ruff_cache
+*.png
